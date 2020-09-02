@@ -1,1 +1,2 @@
 CaffeModel/alexnet/bvlc_alexnet.caffemodel filter=lfs diff=lfs merge=lfs -text
+CaffeModel/alexnet/pretrained.caffemodel filter=lfs diff=lfs merge=lfs -text
