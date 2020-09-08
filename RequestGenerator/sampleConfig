@@ -1,0 +1,6 @@
+Interval: 10, 20
+Model index: alexnet, vgg, googlenet, lenet
+Base Lambda: 10
+Intensity: 1.0, 1.1, 1.2
+Max arrival time: 2000
+Base runtime: 2000
