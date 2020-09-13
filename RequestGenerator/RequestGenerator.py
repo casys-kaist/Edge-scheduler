@@ -22,26 +22,77 @@ from collections import Counter
 #	 8: fasterrcnn
 ####################################################
 
+# alexnet, vgg, lenet, googlenet, resnet, mobilenet, squeezenet, yolov2, frcnn
+Models_min_runtimes = [20, 91, 5, 16, 36.8, 12.2, 12.6, 47.2, 20.4]
 
-def printConfigInfo(interval, model, base_lambda, intensity, max_arrtime, base_runtime):
+def DefineScenarios():
+	all_scenarios = []
+	ratio = [1, 2, 1, 1, 1, 1] # ratio
+	all_scenarios.append(ratio)
+
+	return all_scenarios
+	
+def GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensity):
+	model_total_requests = []
+	ideal_req = []
+
+	for i in range(0, len(selected_model_min_runtimes)):
+		ideal_req.append(max_arrtime / selected_model_min_runtimes[i])
+
+	print(selected_model_min_runtimes)
+	#for i in range(0, len(ideal_req)):
+	#	print(ideal_req[i])
+
+	for i in range(0, len(scenario)):
+		model_total_requests.append( int(intensity * (ideal_req[i] * float(scenario[i])/sum(scenario) )))
+
+	print(model_total_requests)
+	print(scenario)
+		
+	return model_total_requests
+	
+# For each iteration
+def InitSetting(interval, model, base_lambda, intensity, max_arrtime, scenario):
+	selected_model_min_runtimes = []
+	interval = float(interval)	
+	base_lambda = float(base_lambda)	
+	intensity = float(intensity)	
+	max_arrtime = float(max_arrtime)	
+	num_of_model = -1
+	model_req = []
+
+	num_of_model = len(model)	
+	for i in range(0, len(model)):
+		selected_model_min_runtimes.append(Models_min_runtimes[model[i]])
+
+	model_req = GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensity)
+
+	return num_of_model, selected_model_min_runtimes
+	
+
+def printConfigInfo(interval, model, base_lambda, intensity, max_arrtime):
 	print("Interval: ", interval)
 	print("Model index: ", model)
 	print("Base Lambda: ", base_lambda) 
 	print("Intensity: ", intensity)
 	print("Max arrival time: ", max_arrtime)
-	print("Base runtime: ", base_runtime) 
 
 def GetModelIndex(model_list):
 	model = []
-	if model_list.find("alexnet") != -1: model.append(0)
-	if model_list.find("vgg") != -1: model.append(1)
-	if model_list.find("lenet") != -1: model.append(2)
-	if model_list.find("googlenet") != -1: model.append(3)
-	if model_list.find("resnet") != -1: model.append(4)
-	if model_list.find("mobilenet") != -1: model.append(5)
-	if model_list.find("squeezenet") != -1: model.append(6)
-	if model_list.find("yolov2") != -1: model.append(7)
-	if model_list.find("fasterrcnn") != -1: model.append(8)
+
+	for i in range(0, len(model_list)):
+		model_name = model_list[i].replace(' ', '')
+		if model_name == "alexnet": model.append(0)
+		elif model_name == "vgg": model.append(1)
+		elif model_name == "lenet": model.append(2)
+		elif model_name == "googlenet": model.append(3)
+		elif model_name == "resnet": model.append(4)
+		elif model_name == "mobilenet": model.append(5)
+		elif model_name == "squeezenet": model.append(6)
+		elif model_name == "yolov2": model.append(7)
+		elif model_name == "fasterrcnn": model.append(8)
+
+	print(model)
 
 	return model
 
@@ -51,33 +102,38 @@ def ReadInputConfigs(configFile):
 	base_lambda = [10]
 	intensity = []
 	max_arrtime = [2000] # 2 sec
-	base_runtime = 2000.0
 
 	File = open(configFile, "r")
 	while True:
 		line = File.readline()
 		if not line: break
-		print(line)
 		
 		if line.find("Interval") != -1:
 			interval = re.findall("\d+", line)
 		elif line.find("Model index") != -1:
-			model = GetModelIndex(line)
+			model_list = line.rstrip("\n").split(":")[1].split(",")
+			model = GetModelIndex(model_list)
 		elif line.find("Base Lambda") != -1:
 			base_lambda = re.findall("\d+", line)
 		elif line.find("Intensity") != -1:
 			intensity = re.findall("\d+\.\d+", line)
 		elif line.find("Max arrival time") != -1:
 			max_arrtime = re.findall("\d+", line)
-		elif line.find("Base runtime") != -1:
-			base_runtime = re.findall("\d+", line)
 		
-
-	return interval, model, base_lambda, intensity, max_arrtime, base_runtime
+	return interval, model, base_lambda, intensity, max_arrtime 
 	
 def GenerateRequestMain(configFile):
-	interval, model, base_lambda, intensity, max_arrtime, base_runtime = ReadInputConfigs(configFile)		
-	printConfigInfo(interval, model, base_lambda, intensity, max_arrtime, base_runtime)
+	interval, model, base_lambda, intensity, max_arrtime = ReadInputConfigs(configFile)	
+	scenario = DefineScenarios() 
+
+	printConfigInfo(interval, model, base_lambda, intensity, max_arrtime)
+
+	for i in range(0, len(interval)):
+		for j in range(0, len(base_lambda)):
+			for k in range(0, len(intensity)):
+				for l in range(0, len(max_arrtime)):
+					for m in range(0, len(scenario)):
+						InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
 
 
 if __name__=="__main__":
@@ -99,3 +155,4 @@ if __name__=="__main__":
 	os.system("mkdir " + inputDirectoryPath)
 
 	GenerateRequestMain(configFile)
+
