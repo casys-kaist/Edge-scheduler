@@ -196,8 +196,41 @@ def GenerateInputFileName(input_full_path, scenario_num, intensity, model, model
 
 	return input_file_name
 
+def ExportFiles(input_file_name, model, req_queue):
+
+	fw = open(input_file_name, "w")
+
+	oldstdout = sys.stdout
+	sys.stdout = fw	
+	
+	for i in range(0, len(req_queue)):
+		for j in range(0, len(req_queue[i])):
+			req_str = ""
+			model_name = ""
+			if model[i] == 0: model_name += "alexnet"
+			elif model[i] == 1: model_name += "vgg"
+			elif model[i] == 2: model_name += "lenet"
+			elif model[i] == 3: model_name += "googlenet"
+			elif model[i] == 4: model_name += "resnet"
+			elif model[i] == 5: model_name += "mobilenet"
+			elif model[i] == 6: model_name += "squeezenet"
+			elif model[i] == 7: model_name += "yolov2"
+			elif model[i] == 8: model_name += "frcnn"
+	
+			req_str += model_name
+			req_str += "_" + str(j) + ":" + str(req_queue[i][j])
+
+			sys.stdout.write(req_str + "\n")
+
+	fw.close()
+	sys.stdout = oldstdout
+
+
 def ExportResults(input_full_path, scenario_num, intensity, model, req_queue, model_tot_req):
-	GenerateInputFileName(input_full_path, scenario_num, intensity, model, model_tot_req)
+	input_file_name = GenerateInputFileName(input_full_path, scenario_num, intensity, model, model_tot_req)
+	
+	ExportFiles(input_file_name, model, req_queue)
+	
 	
 def GenerateRequestMain(configFile, inputDirectoryPath):
 	interval, model, base_lambda, intensity, max_arrtime = ReadInputConfigs(configFile)	
