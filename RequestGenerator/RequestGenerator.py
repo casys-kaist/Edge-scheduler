@@ -31,9 +31,60 @@ def DefineScenarios():
 	all_scenarios.append(ratio)
 
 	return all_scenarios
+
+# num_request_based
+def GeneratePoissonRequest(req_queue, _lambda, num_requests, max_arr_time):
+	
+	last_arrival_time = 999999
+	while max_arr_time < last_arrival_time:
+		req_queue_tmp = []
+		_arrival_time = 0
+		for i in range(num_requests):
+			#Get the next probability value from Uniform(0,1)
+			p = random.random()
+	
+			#Plug it into the inverse of the CDF of Exponential(_lamnbda)
+			_inter_arrival_time = -math.log(1.0 - p)/_lambda
+	
+			#Add the inter-arrival time to the running sum
+			_arrival_time = _arrival_time + _inter_arrival_time
+			
+			# second
+			#print it all out
+			#print(str(i)+': '+str(_inter_arrival_time)+','+str(_arrival_time))
+			req_queue_tmp.append(int(_arrival_time * 1000)) # sec -> ms
+			#req_queue.append(_arrival_time)
+
+		last_arrival_time = req_queue_tmp[-1]	
+	
+	for i in range(0, len(req_queue_tmp)):
+		req_queue.append(req_queue_tmp[i])
+		
+	req_queue.sort()
+	print(req_queue)
+	
+	return num_requests
+
+
+def LambdaSetting(model_tot_req, max_arrtime):
+	model_lambda = []
+	for i in range(0, len(model_tot_req)):
+		_lambda = 1000 * ( model_tot_req[i] / max_arrtime )
+		model_lambda.append(_lambda)
+	#print("lambda: ", model_lambda)
+	return model_lambda
+	
+def GeneratePoissonMain(req_queue, model_tot_req, max_arrtime):
+	tot_req = 0
+	model_lambda = LambdaSetting(model_tot_req, max_arrtime)
+
+	for i in range(0, len(model_tot_req)):
+		tot_req += GeneratePoissonRequest(req_queue[i], model_lambda[i], model_tot_req[i], max_arrtime) 
+	return tot_req 
+		
 	
 def GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensity):
-	model_total_requests = []
+	model_total_req = []
 	ideal_req = []
 
 	for i in range(0, len(selected_model_min_runtimes)):
@@ -44,30 +95,27 @@ def GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensit
 	#	print(ideal_req[i])
 
 	for i in range(0, len(scenario)):
-		model_total_requests.append( int(intensity * (ideal_req[i] * float(scenario[i])/sum(scenario) )))
+		model_total_req.append( int(intensity * (ideal_req[i] * float(scenario[i])/sum(scenario) )))
 
-	print(model_total_requests)
+	print(model_total_req)
 	print(scenario)
 		
-	return model_total_requests
+	return model_total_req
 	
 # For each iteration
 def InitSetting(interval, model, base_lambda, intensity, max_arrtime, scenario):
 	selected_model_min_runtimes = []
-	interval = float(interval)	
-	base_lambda = float(base_lambda)	
-	intensity = float(intensity)	
-	max_arrtime = float(max_arrtime)	
-	num_of_model = -1
-	model_req = []
+	req_queue = []
 
-	num_of_model = len(model)	
 	for i in range(0, len(model)):
 		selected_model_min_runtimes.append(Models_min_runtimes[model[i]])
 
-	model_req = GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensity)
+	model_tot_req = GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensity)
 
-	return num_of_model, selected_model_min_runtimes
+	for i in range(0, len(model)):	
+		req_queue.append([])
+
+	return req_queue, model_tot_req
 	
 
 def printConfigInfo(interval, model, base_lambda, intensity, max_arrtime):
@@ -92,8 +140,6 @@ def GetModelIndex(model_list):
 		elif model_name == "yolov2": model.append(7)
 		elif model_name == "fasterrcnn": model.append(8)
 
-	print(model)
-
 	return model
 
 def ReadInputConfigs(configFile):
@@ -110,15 +156,19 @@ def ReadInputConfigs(configFile):
 		
 		if line.find("Interval") != -1:
 			interval = re.findall("\d+", line)
+			intreval = list(np.float_(interval)) 
 		elif line.find("Model index") != -1:
 			model_list = line.rstrip("\n").split(":")[1].split(",")
 			model = GetModelIndex(model_list)
 		elif line.find("Base Lambda") != -1:
 			base_lambda = re.findall("\d+", line)
+			base_lambda = list(np.float_(base_lambda)) 
 		elif line.find("Intensity") != -1:
 			intensity = re.findall("\d+\.\d+", line)
+			intensity = list(np.float_(intensity)) 
 		elif line.find("Max arrival time") != -1:
 			max_arrtime = re.findall("\d+", line)
+			max_arrtime = list(np.float_(max_arrtime)) 
 		
 	return interval, model, base_lambda, intensity, max_arrtime 
 	
@@ -133,7 +183,8 @@ def GenerateRequestMain(configFile):
 			for k in range(0, len(intensity)):
 				for l in range(0, len(max_arrtime)):
 					for m in range(0, len(scenario)):
-						InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
+						req_queue, model_tot_req = InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
+						GeneratePoissonMain(req_queue, model_tot_req, max_arrtime[l])
 
 
 if __name__=="__main__":
