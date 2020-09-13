@@ -171,8 +171,35 @@ def ReadInputConfigs(configFile):
 			max_arrtime = list(np.float_(max_arrtime)) 
 		
 	return interval, model, base_lambda, intensity, max_arrtime 
+
+
+def GenerateInputFileName(input_full_path, scenario_num, intensity, model, model_tot_req):
+	input_file_name = input_full_path + "/I"
+	input_file_name += "S" + str(scenario_num) + "_" + str(int(intensity*10)) + "L"
+	for i in range(0, len(model_tot_req)):
+		#if models_req_numbers[k] == 0: continue
+		input_file_name += "_" + str(model_tot_req[i]) 
+	#input_file_name += "_" + str(base_lambda)
 	
-def GenerateRequestMain(configFile):
+	input_file_name += "+"
+	for i in range(0, len(model)):
+		if model[i] == 0: input_file_name += "a"
+		elif model[i] == 1: input_file_name += "v"
+		elif model[i] == 2: input_file_name += "l"
+		elif model[i] == 3: input_file_name += "g"
+		elif model[i] == 4: input_file_name += "r"
+		elif model[i] == 5: input_file_name += "m"
+		elif model[i] == 6: input_file_name += "s"
+		elif model[i] == 7: input_file_name += "y"
+		elif model[i] == 8: input_file_name += "f"
+	print(input_file_name)
+
+	return input_file_name
+
+def ExportResults(input_full_path, scenario_num, intensity, model, req_queue, model_tot_req):
+	GenerateInputFileName(input_full_path, scenario_num, intensity, model, model_tot_req)
+	
+def GenerateRequestMain(configFile, inputDirectoryPath):
 	interval, model, base_lambda, intensity, max_arrtime = ReadInputConfigs(configFile)	
 	scenario = DefineScenarios() 
 
@@ -185,6 +212,7 @@ def GenerateRequestMain(configFile):
 					for m in range(0, len(scenario)):
 						req_queue, model_tot_req = InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
 						GeneratePoissonMain(req_queue, model_tot_req, max_arrtime[l])
+						ExportResults(inputDirectoryPath, m, intensity[k], model, req_queue, model_tot_req)
 
 
 if __name__=="__main__":
@@ -205,5 +233,5 @@ if __name__=="__main__":
 		os.system("rm -rf " + inputDirectoryPath)		
 	os.system("mkdir " + inputDirectoryPath)
 
-	GenerateRequestMain(configFile)
+	GenerateRequestMain(configFile, inputDirectoryPath)
 
