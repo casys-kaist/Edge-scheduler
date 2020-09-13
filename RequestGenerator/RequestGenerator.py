@@ -61,7 +61,7 @@ def GeneratePoissonRequest(req_queue, _lambda, num_requests, max_arr_time):
 		req_queue.append(req_queue_tmp[i])
 		
 	req_queue.sort()
-	print(req_queue)
+	#print(req_queue)
 	
 	return num_requests
 
@@ -90,15 +90,15 @@ def GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensit
 	for i in range(0, len(selected_model_min_runtimes)):
 		ideal_req.append(max_arrtime / selected_model_min_runtimes[i])
 
-	print(selected_model_min_runtimes)
+	#print(selected_model_min_runtimes)
 	#for i in range(0, len(ideal_req)):
 	#	print(ideal_req[i])
 
 	for i in range(0, len(scenario)):
 		model_total_req.append( int(intensity * (ideal_req[i] * float(scenario[i])/sum(scenario) )))
 
-	print(model_total_req)
-	print(scenario)
+	#print(model_total_req)
+	#print(scenario)
 		
 	return model_total_req
 	
@@ -124,6 +124,32 @@ def printConfigInfo(interval, model, base_lambda, intensity, max_arrtime):
 	print("Base Lambda: ", base_lambda) 
 	print("Intensity: ", intensity)
 	print("Max arrival time: ", max_arrtime)
+
+def PrintInfo(interval, model, base_lambda, intensity, max_arrtime, scenario, req_queue):
+	print("=======================================================================")
+	print("Interval: ", interval)
+	print("Model: ", model)
+	print("Scenario ratio: ", scenario)
+	print("Base Lambda: ", base_lambda) 
+	print("Intensity: ", intensity)
+	print("Max arrival time: ", max_arrtime)
+
+	for i in range(0, len(req_queue)):
+		model_name = ""
+		if model[i] == 0: model_name += "alexnet"
+		elif model[i] == 1: model_name += "vgg"
+		elif model[i] == 2: model_name += "lenet"
+		elif model[i] == 3: model_name += "googlenet"
+		elif model[i] == 4: model_name += "resnet"
+		elif model[i] == 5: model_name += "mobilenet"
+		elif model[i] == 6: model_name += "squeezenet"
+		elif model[i] == 7: model_name += "yolov2"
+		elif model[i] == 8: model_name += "frcnn"
+		
+		sys.stdout.write(model_name + ": ")
+		print(req_queue[i])
+	print("=======================================================================")
+	
 
 def GetModelIndex(model_list):
 	model = []
@@ -156,20 +182,20 @@ def ReadInputConfigs(configFile):
 		
 		if line.find("Interval") != -1:
 			interval = re.findall("\d+", line)
-			intreval = list(np.float_(interval)) 
+			interval = [round(float(n), 1) for n in interval]
 		elif line.find("Model index") != -1:
 			model_list = line.rstrip("\n").split(":")[1].split(",")
 			model = GetModelIndex(model_list)
 		elif line.find("Base Lambda") != -1:
 			base_lambda = re.findall("\d+", line)
-			base_lambda = list(np.float_(base_lambda)) 
+			base_lambda = [round(float(n), 1) for n in base_lambda]
 		elif line.find("Intensity") != -1:
 			intensity = re.findall("\d+\.\d+", line)
-			intensity = list(np.float_(intensity)) 
+			intensity = [round(float(n), 1) for n in intensity]
 		elif line.find("Max arrival time") != -1:
 			max_arrtime = re.findall("\d+", line)
-			max_arrtime = list(np.float_(max_arrtime)) 
-		
+			max_arrtime = [round(float(n), 1) for n in max_arrtime]
+
 	return interval, model, base_lambda, intensity, max_arrtime 
 
 
@@ -192,7 +218,7 @@ def GenerateInputFileName(input_full_path, scenario_num, intensity, model, model
 		elif model[i] == 6: input_file_name += "s"
 		elif model[i] == 7: input_file_name += "y"
 		elif model[i] == 8: input_file_name += "f"
-	print(input_file_name)
+	#print(input_file_name)
 
 	return input_file_name
 
@@ -245,6 +271,7 @@ def GenerateRequestMain(configFile, inputDirectoryPath):
 					for m in range(0, len(scenario)):
 						req_queue, model_tot_req = InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
 						GeneratePoissonMain(req_queue, model_tot_req, max_arrtime[l])
+						PrintInfo(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m], req_queue)
 						ExportResults(inputDirectoryPath, m, intensity[k], model, req_queue, model_tot_req)
 
 
