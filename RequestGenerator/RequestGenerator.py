@@ -174,6 +174,7 @@ def ReadInputConfigs(configFile):
 	base_lambda = [10]
 	intensity = []
 	max_arrtime = [2000] # 2 sec
+	scenarios = [] # 2 sec
 
 	File = open(configFile, "r")
 	while True:
@@ -195,8 +196,11 @@ def ReadInputConfigs(configFile):
 		elif line.find("Max arrival time") != -1:
 			max_arrtime = re.findall("\d+", line)
 			max_arrtime = [round(float(n), 1) for n in max_arrtime]
+		elif line.find("Scenario") != -1:
+			scenario = re.findall("\d+", line)
+			scenarios.append([int(n) for n in scenario])
 
-	return interval, model, base_lambda, intensity, max_arrtime 
+	return interval, model, base_lambda, intensity, max_arrtime, scenarios
 
 
 def GenerateInputFileName(input_full_path, scenario_num, intensity, model, model_tot_req):
@@ -259,8 +263,8 @@ def ExportResults(input_full_path, scenario_num, intensity, model, req_queue, mo
 	
 	
 def GenerateRequestMain(configFile, inputDirectoryPath):
-	interval, model, base_lambda, intensity, max_arrtime = ReadInputConfigs(configFile)	
-	scenario = DefineScenarios() 
+	interval, model, base_lambda, intensity, max_arrtime, scenarios = ReadInputConfigs(configFile)	
+	#scenario = DefineScenarios() 
 
 	printConfigInfo(interval, model, base_lambda, intensity, max_arrtime)
 
@@ -268,10 +272,10 @@ def GenerateRequestMain(configFile, inputDirectoryPath):
 		for j in range(0, len(base_lambda)):
 			for k in range(0, len(intensity)):
 				for l in range(0, len(max_arrtime)):
-					for m in range(0, len(scenario)):
-						req_queue, model_tot_req = InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m])
+					for m in range(0, len(scenarios)):
+						req_queue, model_tot_req = InitSetting(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenarios[m])
 						GeneratePoissonMain(req_queue, model_tot_req, max_arrtime[l])
-						PrintInfo(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenario[m], req_queue)
+						PrintInfo(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenarios[m], req_queue)
 						ExportResults(inputDirectoryPath, m, intensity[k], model, req_queue, model_tot_req)
 
 
