@@ -50,41 +50,30 @@ using namespace std;
 const int FAILURE = 1;
 const int SUCCESS = 0;
 
-const char* vgg_inputFile320 = "/data/local/tmp/vgg/target_raw_list_320.txt";
-const char* vgg_inputFile160 = "/data/local/tmp/vgg/target_raw_list_160.txt";
+const char* image_input_10  = "/data/local/tmp/input/image_input_10.txt";
+const char* image_input_160  = "/data/local/tmp/input/image_input_160.txt";
+const char* image_input_320  = "/data/local/tmp/input/image_input_320.txt";
+const char* digit_input_100 = "/data/local/tmp/input/digit_input_100.txt";
+const char* character_input_500 = "/data/local/tmp/input/character_input_500.txt";
 
-const char* alexnet_inputFile = "/data/local/tmp/alexnet/target_raw_list_320.txt";
 std::string alexnet_OutputDir = "/data/local/tmp/test/part_exper/alexnet_output_part";
 std::string alexnet_layerPath = "/data/local/tmp/test/part_exper/alexnet_";
-
 std::string googlenet_OutputDir = "/data/local/tmp/test/part_exper/googlenet_output_part";
 std::string googlenet_layerPath = "/data/local/tmp/test/part_exper/googlenet_";
-
 std::string resnet_OutputDir = "/data/local/tmp/test/part_exper/resnet_output_part";
 std::string resnet_layerPath = "/data/local/tmp/test/part_exper/resnet_";
-
-const char* vgg_inputFile = "/data/local/tmp/vgg/target_raw_list_10.txt";
 std::string vgg_OutputDir = "/data/local/tmp/test/part_exper/vgg_output_part";
 std::string vgg_layerPath = "/data/local/tmp/test/part_exper/vgg_";
-
-const char* pos_inputFile = "/data/local/tmp/pos/pos_raw_list_500.txt";
 std::string pos_OutputDir = "/data/local/tmp/test/part_exper/pos_output_part";
 std::string pos_layerPath = "/data/local/tmp/test/part_exper/pos_";
-
-const char* mnist_inputFile = "/data/local/tmp/mnist/target_list_100.txt";
 std::string mnist_OutputDir = "/data/local/tmp/test/part_exper/mnist_output_part";
 std::string mnist_layerPath = "/data/local/tmp/test/part_exper/mnist_";
-
 std::string mobilenet_OutputDir = "/data/local/tmp/test/part_exper/mobilenet_output_part";
 std::string mobilenet_layerPath = "/data/local/tmp/test/part_exper/mobilenet_";
-
 std::string squeezenet_OutputDir = "/data/local/tmp/test/part_exper/squeezenet_output_part";
 std::string squeezenet_layerPath = "/data/local/tmp/test/part_exper/squeezenet_";
-
-const char* yolov2_inputFile = "/data/local/tmp/yolov2/target_raw_list_160.txt";
 std::string yolov2_OutputDir = "/data/local/tmp/test/part_exper/yolov2_output_part";
 std::string yolov2_layerPath = "/data/local/tmp/test/part_exper/yolov2_";
-
 std::string frcnn_OutputDir = "/data/local/tmp/test/part_exper/frcnn_output_part";
 std::string frcnn_layerPath = "/data/local/tmp/test/part_exper/frcnn_";
 
@@ -723,7 +712,7 @@ int main(int argc, char** argv)
 
     if(strcmp(argv[1], "alexnet") == 0) {
 	std::cout << "Alexnet" << std::endl;
- 	app_inputFile = alexnet_inputFile;
+ 	app_inputFile = image_input_320;
  	app_OutputDir = alexnet_OutputDir;
 
 	if(num_input_layers == 1)
@@ -735,7 +724,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "vgg") == 0) {
 	std::cout << "VGG" << std::endl;
- 	app_inputFile = vgg_inputFile;
+ 	app_inputFile = image_input_10;
  	app_OutputDir = vgg_OutputDir;
 
 	if(num_input_layers== 1)
@@ -747,7 +736,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "pos") == 0) {
 	std::cout << "POS" << std::endl;
- 	app_inputFile = pos_inputFile;
+ 	app_inputFile = character_input_500;
  	app_OutputDir = pos_OutputDir;
 
 	if(num_input_layers== 1)
@@ -757,7 +746,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "mnist") == 0) {
 	std::cout << "Mnist" << std::endl;
- 	app_inputFile = mnist_inputFile;
+ 	app_inputFile = digit_input_100;
  	app_OutputDir = mnist_OutputDir;
 
 	if(num_input_layers== 1)
@@ -768,9 +757,9 @@ int main(int argc, char** argv)
     else if(strcmp(argv[1], "googlenet") == 0) {
 	std::cout << "Googlenet" << std::endl;
 	if(batchSize < 80) 
- 		app_inputFile = vgg_inputFile160;
+ 		app_inputFile = image_input_160;
 	else 
- 		app_inputFile = vgg_inputFile320;
+ 		app_inputFile = image_input_320;
  	app_OutputDir = alexnet_OutputDir;
 
 	if(num_input_layers == 1)
@@ -781,9 +770,9 @@ int main(int argc, char** argv)
     else if(strcmp(argv[1], "resnet") == 0) {
 	std::cout << "Resnet" << std::endl;
 	if(batchSize < 80) 
- 		app_inputFile = vgg_inputFile160;
+ 		app_inputFile = image_input_160;
 	else 
- 		app_inputFile = vgg_inputFile320;
+ 		app_inputFile = image_input_320;
  	app_OutputDir = alexnet_OutputDir;
 
 	if(num_input_layers == 1)
@@ -796,9 +785,9 @@ int main(int argc, char** argv)
     else if(strcmp(argv[1], "mobilenet") == 0) {
 	std::cout << "Mobilenet" << std::endl;
 	if(batchSize < 80) 
- 		app_inputFile = vgg_inputFile160;
+ 		app_inputFile = image_input_160;
 	else 
- 		app_inputFile = vgg_inputFile320;
+ 		app_inputFile = image_input_320;
  	app_OutputDir = alexnet_OutputDir;
 
 	if(num_input_layers == 1)
@@ -808,7 +797,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "squeezenet") == 0) {
 	std::cout << "SqueezeNet" << std::endl;
- 	app_inputFile = alexnet_inputFile;
+ 	app_inputFile = image_input_320;
  	app_OutputDir = alexnet_OutputDir;
 
 	if(num_input_layers == 1)
@@ -818,7 +807,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "yolov2") == 0) {
 	std::cout << "yoloV2tiny" << std::endl;
- 	app_inputFile = yolov2_inputFile;
+ 	app_inputFile = image_input_160;
  	app_OutputDir = yolov2_OutputDir;
 
 	if(num_input_layers == 1)
@@ -830,7 +819,7 @@ int main(int argc, char** argv)
     }
     else if(strcmp(argv[1], "frcnn") == 0) {
 	std::cout << "Faster_RCNN" << std::endl;
- 	app_inputFile = alexnet_inputFile;
+ 	app_inputFile = image_input_320;
  	app_OutputDir = frcnn_OutputDir;
 
 	if(num_input_layers == 1)
