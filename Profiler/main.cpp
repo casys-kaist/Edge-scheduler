@@ -85,15 +85,16 @@ std::string yolov2_layerPath = "/data/local/tmp/test/part_exper/yolov2_";
 std::string frcnn_OutputDir = "/data/local/tmp/test/part_exper/frcnn_output_part";
 std::string frcnn_layerPath = "/data/local/tmp/test/part_exper/frcnn_";
 
-// Global variable
-// total number of layers 
-int num_input_layers = -1;
+// << Global variable >>
+int num_input_layers = -1; // total number of layers 
 enum {UNKNOWN, USERBUFFER_FLOAT, USERBUFFER_TF8, ITENSOR};
 enum {CPUBUFFER, GLBUFFER};
 bool execStatus = false;
 bool usingInitCaching = false;
 std::string bufferTypeStr = "USERBUFFER_FLOAT";
 std::string userBufferSourceStr = "CPUBUFFER";
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_model;
+// << Global variable >> 
 
 std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string mode, int batchSize) {
 
@@ -234,6 +235,24 @@ std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDi
     }
     return std::move(snpe_final);
 }
+
+void BuildSetup(std::string app_OutputDir,std::string app_layerPath, std::string mode_list, int batchSize){
+    std::string mode = ""; 
+
+    for(int i = 0; i < num_input_layers; i++) {
+	stringstream part_num;
+	part_num << i;
+	std::string app_layerPath_full = app_layerPath + part_num.str() + ".dlc";
+
+	if(mode_list[i] == '0') mode = "cpu";
+	else if(mode_list[i] == '1') mode = "gpu";
+	else if(mode_list[i] == '2') mode = "dsp";
+	
+	std::unique_ptr<zdl::SNPE::SNPE> snpe = DNN_build(app_layerPath_full, app_OutputDir, bufferTypeStr, userBufferSourceStr, mode, batchSize);
+	SNPE_model.push_back(std::move(snpe));	
+    }
+}
+
 
 
 
@@ -384,7 +403,8 @@ int main(int argc, char** argv)
  		app_layerPath = frcnn_layerPath + "2" + "_dlc_ver" + argv[4] + "/part";
     }
 
+    BuildSetup(app_OutputDir, app_layerPath, mode_list, batchSize);
 
 
-	return 0;
+    return 0;
 }
