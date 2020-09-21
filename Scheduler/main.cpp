@@ -50,6 +50,13 @@
 
 using namespace std; 
 
+
+// Global variable 
+ofstream Write_file;
+ofstream Write_file_CPU;
+ofstream Write_file_GPU;
+ofstream Write_file_DSP;
+
 void ReadDirectory(const std::string& name, vector<string>& v)
 {
     DIR* dirp = opendir(name.c_str());
@@ -59,6 +66,13 @@ void ReadDirectory(const std::string& name, vector<string>& v)
        		v.push_back(dp->d_name);
     }
     closedir(dirp);
+}
+
+std::string GetAppList(std::string req_inputfile)
+{
+     size_t pos = req_inputfile.find("+"); 
+     string app_list = req_inputfile.substr(pos+1, req_inputfile.size());
+     return app_list;
 }
 
 int main(int argc, char** argv)
@@ -72,14 +86,37 @@ int main(int argc, char** argv)
     int batch_window = stoi(argv[4]); 
 
     string in_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Inputfiles/poisson_avlg/";
+    string out_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Output/poisson_avlg/";
 //    string in_dir_name = "/data/local/tmp/request_file/" + input_name  +"I/";
 //    string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
+    string in_filepath;
+    string out_filepath;
 
+    string app_list;
+  
     vector<string> req_inputfiles;
     ReadDirectory(in_dir_name, req_inputfiles);
 
     for(int i = 0; i < req_inputfiles.size(); i++) {
-	cout << req_inputfiles[i] << endl;
+	// set full in/out path 
+	in_filepath = in_dir_name + req_inputfiles[i];
+	out_filepath = out_dir_name + "O" + req_inputfiles[i].substr(1, req_inputfiles[i].size());
+	// get App list from request input file name 
+	app_list = GetAppList(req_inputfiles[i]);
+
+	cout << in_filepath << endl;	
+	cout << out_filepath << endl;
+	cout << app_list << endl;
+
+	Write_file.open(out_filepath+"ALL", ios::out);	
+	Write_file_CPU.open(out_filepath + "C", ios::out);	
+	Write_file_GPU.open(out_filepath + "G", ios::out);	
+	Write_file_DSP.open(out_filepath + "D", ios::out);	
+
+	Write_file.close();
+	Write_file_CPU.close();
+	Write_file_GPU.close();
+	Write_file_DSP.close();
     }
 
     return 0;
