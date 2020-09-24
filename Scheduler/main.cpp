@@ -400,6 +400,59 @@ void BuildModelAll(std::string app_OutputDir,std::string app_layerPath, std::str
     }
 }
 
+std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr, std::vector<std::vector<float>>& input_ptr, int input_index, int start_index){
+    auto& SNPE = model_ptr; 
+    auto& inputs = input_ptr;
+
+    // Check if given buffer type is valid
+    int bufferType;
+    if (bufferTypeStr == "USERBUFFER_FLOAT")
+    {
+        bufferType = USERBUFFER_FLOAT;
+    }
+    else if (bufferTypeStr == "USERBUFFER_TF8")
+    {
+        bufferType = USERBUFFER_TF8;
+    }
+    else if (bufferTypeStr == "ITENSOR")
+    {
+        bufferType = ITENSOR;
+    }
+    else
+    {
+        std::cout << "Buffer type is not valid. Please run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(FAILURE);
+    }
+
+    if(bufferType == ITENSOR) { 
+        zdl::DlSystem::TensorMap outputTensorMap;
+
+        for (size_t i = input_index; i < inputs.size(); i++) {
+   		std::unique_ptr<zdl::DlSystem::ITensor> input;
+		const auto &strList_opt = SNPE.at(start_index)->getInputTensorNames();
+    		if (!strList_opt) throw std::runtime_error("Error obtaining Input tensor names");
+
+    		const auto &strList = *strList_opt;
+    		if (strList.size() == 1) std::exit(FAILURE);
+
+    		const auto &inputDims_opt = SNPE.at(start_index)->getInputDimensions(strList.at(0));
+    		const auto &inputShape = *inputDims_opt;
+
+    		input = zdl::SNPE::SNPEFactory::getTensorFactory().createTensor(inputShape);
+	
+    		if (input->getSize() != inputs[i].size()) {
+       		 	std::cerr << "Size of input does not match network.\n"
+       		           << "Expecting: " << input->getSize() << "\n"
+       		           << "Got: " << inputs[i].size() << "\n";
+       		 	std::exit(EXIT_FAILURE);
+    		}
+    		std::copy(inputs[i].begin(), inputs[i].end(), input->begin());
+    		return std::move(input);   	
+	}
+    }
+}
+
+
 int main(int argc, char** argv)
 {
     cout << "Usage: snpe-sample.. <algo_cmd> <input_name> <deadlineN> <batch_window>" << endl;
