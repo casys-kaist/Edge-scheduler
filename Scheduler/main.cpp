@@ -358,6 +358,32 @@ std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string Outp
     return std::move(snpe_final);
 }
 
+int prefetch_inputfile(std::string OutputDir, vector<vector<float> > *model_inputs, const char* inputFile, int batchSize){
+
+    std::ifstream inputList(inputFile);
+    if (!inputList) {
+        std::cout << "Input list or dlc file not valid. Please ensure that you have provided a valid input list and dlc for processing. Run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(0); 
+    }
+
+    // Open the input file listing and group input files into batches
+    std::vector<std::vector<std::string>> inputs = preprocessInput(inputFile, batchSize);
+
+    for (size_t i = 0; i < inputs.size(); i++) {
+    		std::vector<float> inputVec;
+    		for(size_t j=0; j<inputs[i].size(); j++) {
+       	 		std::string filePath(inputs[i][j]);
+        		//std::cout << "Processing DNN Input: " << filePath << "\n";
+        		std::vector<float> loadedFile = loadFloatDataFile(filePath);
+        		inputVec.insert(inputVec.end(), loadedFile.begin(), loadedFile.end());
+    		}
+		model_inputs->push_back(inputVec);
+		break; // for all batch sizes (even, odd, ...)
+    }
+    return SUCCESS;
+}
+
+
 
 
 int main(int argc, char** argv)
