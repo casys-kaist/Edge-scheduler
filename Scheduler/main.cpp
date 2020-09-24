@@ -250,7 +250,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 	}
 }
 
-std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string mode, int batchSize) {
+std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string device, int batchSize) {
 
     // Check if given arguments represent valid files
     std::ifstream dlcFile(dlc);
@@ -293,17 +293,17 @@ std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string Outp
 
     zdl::DlSystem::Runtime_t runtime = zdl::DlSystem::Runtime_t::CPU;
 
-    if (mode[0] == 'g') 
+    if (device[0] == 'g') 
     {
 	cout << "<<<<< GPU >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::GPU;
     }
-    else if (mode[0] == 'd') 
+    else if (device[0] == 'd') 
     {
 	cout << "<<<<< DSP >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::DSP;
     }
-    else if (mode[0] == 'c') 
+    else if (device[0] == 'c') 
     {
 	cout << "<<<<< CPU >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::CPU;
@@ -358,7 +358,7 @@ std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string Outp
     return std::move(snpe_final);
 }
 
-int prefetch_inputfile(std::string OutputDir, vector<vector<float> > *model_inputs, const char* inputFile, int batchSize){
+int PrefetchInputFile(std::string OutputDir, vector<vector<float> > *model_inputs, const char* inputFile, int batchSize){
 
     std::ifstream inputList(inputFile);
     if (!inputList) {
@@ -383,8 +383,22 @@ int prefetch_inputfile(std::string OutputDir, vector<vector<float> > *model_inpu
     return SUCCESS;
 }
 
+void BuildModelAll(std::string app_OutputDir,std::string app_layerPath, std::string device_list, int batchSize, int num_input_layers, std::vector<std::unique_ptr<zdl::SNPE::SNPE>> &SNPE_vec) {
+    std::string device = ""; 
 
+    for(int i = 0; i < num_input_layers; i++) {
+	stringstream part_num;
+	part_num << i;
+	std::string app_layerPath_full = app_layerPath + part_num.str() + ".dlc";
 
+	if(device_list[i] == 'B') device = "cpu";
+	else if(device_list[i] == 'G') device = "gpu";
+	else if(device_list[i] == 'D') device = "dsp";
+	
+	std::unique_ptr<zdl::SNPE::SNPE> snpe = BuildDNNModel(app_layerPath_full, app_OutputDir, bufferTypeStr, userBufferSourceStr, device, batchSize);
+	SNPE_vec.push_back(std::move(snpe));	
+    }
+}
 
 int main(int argc, char** argv)
 {
