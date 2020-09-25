@@ -836,11 +836,11 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 }
 
 // Layer Execution (start from input tensor)
-zdl::DlSystem::TensorMap LayerExecute(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,std::unique_ptr<zdl::DlSystem::ITensor>& input_ptr, int index, char app_id, char dev) {
-    	struct timeval tp; // Added
-        long int before_part, after_part; // Added 
-        gettimeofday(&tp, NULL);  // Added
-   	before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+zdl::DlSystem::TensorMap LayerExecution(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,std::unique_ptr<zdl::DlSystem::ITensor>& input_ptr, int index, char app_id, char dev) {
+    	struct timeval tp;
+        long int before_part, after_part;
+        gettimeofday(&tp, NULL);  
+   	before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 
 	auto& SNPE = model_ptr; 
 	auto& input = input_ptr;
@@ -849,12 +849,33 @@ zdl::DlSystem::TensorMap LayerExecute(std::vector<std::unique_ptr<zdl::SNPE::SNP
         zdl::DlSystem::TensorMap outputTensorMap;
 
 	execStatus = SNPE.at(index)->execute(input.get(), outputTensorMap); 
-        gettimeofday(&tp, NULL);  // Added
-        after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
-        Write_file << app_id  << " " << dev << " Execute " << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+        gettimeofday(&tp, NULL);  
+        after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+        Write_file << app_id  << " " << dev << " Execute " << ": " << after_part - before_part << " ms" <<  std::endl;
 
 	return outputTensorMap;	
 }
+
+// Layer Execution (start from mid tensor)
+zdl::DlSystem::TensorMap LayerExecution(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,zdl::DlSystem::TensorMap& midTensorMap, int index, char app_id, char dev) {
+    	struct timeval tp; 
+        long int before_part, after_part; 
+        gettimeofday(&tp, NULL); 
+   	before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+
+	auto& SNPE = model_ptr; 
+	bool execStatus = false;
+        zdl::DlSystem::TensorMap outputTensorMap;
+
+	execStatus = SNPE.at(index)->execute(midTensorMap, outputTensorMap); 
+
+        gettimeofday(&tp, NULL);  
+        after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+        Write_file << app_id  << " " << dev << " Execute " << ": " << after_part - before_part << " ms" <<  std::endl;
+
+	return outputTensorMap;	
+}
+
 
 
 int main(int argc, char** argv)
