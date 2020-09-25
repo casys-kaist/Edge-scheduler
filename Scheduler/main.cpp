@@ -21,6 +21,7 @@
 #include <iterator>
 #include <unordered_map>
 
+//#include "main.hpp"
 #include "CheckRuntime.hpp"
 #include "LoadContainer.hpp"
 #include "SetBuilderOptions.hpp"
@@ -49,6 +50,91 @@
 #include <dirent.h>
 
 using namespace std; 
+
+const char* alexnet_inputFile = "/data/local/tmp/alexnet/target_raw_list_320.txt";
+std::string alexnet_OutputDir = "/data/local/tmp/test/part_exper/alexnet_output_part";
+std::string alexnet_layerPath = "/data/local/tmp/test/part_exper/alexnet_";
+
+const char* vgg_inputFile = "/data/local/tmp/vgg/target_raw_list_20.txt";
+std::string vgg_OutputDir = "/data/local/tmp/test/part_exper/vgg_output_part";
+std::string vgg_layerPath = "/data/local/tmp/test/part_exper/vgg_";
+
+const char* pos_inputFile = "/data/local/tmp/pos/pos_raw_list_500.txt";
+std::string pos_OutputDir = "/data/local/tmp/test/part_exper/pos_output_part";
+std::string pos_layerPath = "/data/local/tmp/test/part_exper/pos_";
+
+const char* mnist_inputFile = "/data/local/tmp/mnist/target_list_320.txt";
+std::string mnist_OutputDir = "/data/local/tmp/test/part_exper/mnist_output_part";
+std::string mnist_layerPath = "/data/local/tmp/test/part_exper/mnist_";
+
+const char* googlenet_inputFile = "/data/local/tmp/vgg/target_raw_list_160.txt"; 
+std::string googlenet_OutputDir = "/data/local/tmp/test/part_exper/googlenet_output_part";
+std::string googlenet_layerPath = "/data/local/tmp/test/part_exper/googlenet_";
+
+const char* resnet_inputFile = "/data/local/tmp/vgg/target_raw_list_20.txt";
+std::string resnet_OutputDir = "/data/local/tmp/test/part_exper/resnet_output_part";
+std::string resnet_layerPath = "/data/local/tmp/test/part_exper/resnet_";
+
+const char* mobilenet_inputFile = "/data/local/tmp/vgg/target_raw_list_20.txt";
+std::string mobilenet_OutputDir = "/data/local/tmp/test/part_exper/mobilenet_output_part";
+std::string mobilenet_layerPath = "/data/local/tmp/test/part_exper/mobilenet_";
+
+const char* squeezenet_inputFile = "/data/local/tmp/alexnet/target_raw_list_320.txt";
+std::string squeezenet_OutputDir = "/data/local/tmp/test/part_exper/squeezenet_output_part";
+std::string squeezenet_layerPath = "/data/local/tmp/test/part_exper/squeezenet_";
+
+const char* yolov2_inputFile = "/data/local/tmp/yolov2/target_raw_list_160.txt";
+std::string yolov2_OutputDir = "/data/local/tmp/test/part_exper/yolov2_output_part";
+std::string yolov2_layerPath = "/data/local/tmp/test/part_exper/yolov2_";
+
+const char* frcnn_inputFile = "/data/local/tmp/alexnet/target_raw_list_320.txt";
+std::string frcnn_OutputDir = "/data/local/tmp/test/part_exper/frcnn_output_part";
+std::string frcnn_layerPath = "/data/local/tmp/test/part_exper/frcnn_";
+
+std::vector<std::vector<float>> alexnet_inputs;
+std::vector<std::vector<float>> vgg_inputs;
+std::vector<std::vector<float>> pos_inputs;
+std::vector<std::vector<float>> mnist_inputs;
+std::vector<std::vector<float>> googlenet_inputs;
+std::vector<std::vector<float>> resnet_inputs;
+std::vector<std::vector<float>> mobilenet_inputs;
+std::vector<std::vector<float>> squeezenet_inputs;
+std::vector<std::vector<float>> yolov2_inputs;
+std::vector<std::vector<float>> frcnn_inputs;
+
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> alexnet_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> vgg_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> pos_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> mnist_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> googlenet_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> resnet_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> mobilenet_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> squeezenet_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> yolov2_inputTensor;
+vector<std::unique_ptr<zdl::DlSystem::ITensor>> frcnn_inputTensor;
+
+zdl::DlSystem::TensorMap midTensorMap_alexnet;
+zdl::DlSystem::TensorMap midTensorMap_vgg;
+zdl::DlSystem::TensorMap midTensorMap_pos;
+zdl::DlSystem::TensorMap midTensorMap_mnist;
+zdl::DlSystem::TensorMap midTensorMap_googlenet;
+zdl::DlSystem::TensorMap midTensorMap_resnet;
+zdl::DlSystem::TensorMap midTensorMap_mobilenet;
+zdl::DlSystem::TensorMap midTensorMap_squeezenet;
+zdl::DlSystem::TensorMap midTensorMap_yolov2;
+zdl::DlSystem::TensorMap midTensorMap_frcnn;
+
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_alexnet;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_vgg;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_pos;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_mnist;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_googlenet;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_resnet;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_mobilenet;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_squeezenet;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_yolov2;
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_frcnn;
+
 
 
 class Model_Parameter {
@@ -451,6 +537,150 @@ std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::uni
 	}
     }
 }
+
+void Model_build() {
+    const char* app_inputFile; 
+    std::string app_OutputDir;
+    std::string app_layerPath;
+
+    int model_num = 0;
+    char prev_id;
+    for(int i = 0; i < Model_Par_List.size(); i++) {
+  	Model_Parameter* mp = &Model_Par_List[i];
+	
+	if(prev_id != mp->id) {
+		prev_id = mp->id;	
+		model_num = 0;	
+	}
+
+	// Alexnet
+	if(mp->id == 'a') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = alexnet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else 
+			app_layerPath = alexnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = alexnet_OutputDir; 
+		app_inputFile = alexnet_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_alexnet);
+		PrefetchInputFile(app_OutputDir, &alexnet_inputs, app_inputFile, mp->batch);
+   		alexnet_inputTensor.push_back(GenerateInputTensor(SNPE_alexnet, alexnet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+	// VGG-16
+	else if(mp->id == 'v') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = vgg_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = vgg_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = vgg_OutputDir; 
+		app_inputFile = vgg_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_vgg);
+   		PrefetchInputFile(app_OutputDir, &vgg_inputs, app_inputFile, mp->batch);
+  		vgg_inputTensor.push_back(GenerateInputTensor(SNPE_vgg, vgg_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+	// LeNet
+	else if(mp->id == 'l') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = mnist_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = mnist_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = mnist_OutputDir; 
+		app_inputFile = mnist_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_mnist);
+ 		PrefetchInputFile(app_OutputDir, &mnist_inputs, app_inputFile, mp->batch);
+  		mnist_inputTensor.push_back(GenerateInputTensor(SNPE_mnist, mnist_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// GoogleNet
+	else if(mp->id == 'g') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = googlenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = googlenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = googlenet_OutputDir; 
+		app_inputFile = googlenet_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_googlenet);
+  		PrefetchInputFile(app_OutputDir, &googlenet_inputs, app_inputFile, mp->batch);
+  		googlenet_inputTensor.push_back(GenerateInputTensor(SNPE_googlenet, googlenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// ResNet-50
+	else if(mp->id == 'r') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = resnet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = resnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = resnet_OutputDir; 
+		app_inputFile = resnet_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_resnet);
+		PrefetchInputFile(app_OutputDir, &resnet_inputs, app_inputFile, mp->batch);
+   		resnet_inputTensor.push_back(GenerateInputTensor(SNPE_resnet, resnet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// MobileNet
+	else if(mp->id == 'm') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = mobilenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = mobilenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = mobilenet_OutputDir; 
+		app_inputFile = mobilenet_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_mobilenet);
+ 		PrefetchInputFile(app_OutputDir, &mobilenet_inputs, app_inputFile, mp->batch);
+  		mobilenet_inputTensor.push_back(GenerateInputTensor(SNPE_mobilenet, mobilenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// SqueezeNet
+	else if(mp->id == 's') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = squeezenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = squeezenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = squeezenet_OutputDir; 
+		app_inputFile = squeezenet_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_squeezenet);
+		PrefetchInputFile(app_OutputDir, &squeezenet_inputs, app_inputFile, mp->batch);
+   		squeezenet_inputTensor.push_back(GenerateInputTensor(SNPE_squeezenet, squeezenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// YoloV2tiny
+	else if(mp->id == 'y') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = yolov2_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = yolov2_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = yolov2_OutputDir; 
+		app_inputFile = yolov2_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_yolov2);
+		PrefetchInputFile(app_OutputDir, &yolov2_inputs, app_inputFile, mp->batch);
+   		yolov2_inputTensor.push_back(GenerateInputTensor(SNPE_yolov2, yolov2_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	// faster_rcnn
+	else if(mp->id == 'f') {
+		if(mp->num_layers == 2) 
+ 			app_layerPath = frcnn_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
+		else
+			app_layerPath = frcnn_layerPath + to_string(mp->num_layers) + "_dlc/part";
+    		app_OutputDir = frcnn_OutputDir; 
+		app_inputFile = frcnn_inputFile;
+
+    		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_frcnn);
+		PrefetchInputFile(app_OutputDir, &frcnn_inputs, app_inputFile, mp->batch);
+   		frcnn_inputTensor.push_back(GenerateInputTensor(SNPE_frcnn, frcnn_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+	}
+
+	}
+}
+
+
 
 
 int main(int argc, char** argv)
