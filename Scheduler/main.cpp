@@ -538,7 +538,7 @@ std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::uni
     }
 }
 
-void Model_build() {
+void BuildAll() {
     const char* app_inputFile; 
     std::string app_OutputDir;
     std::string app_layerPath;
@@ -699,30 +699,45 @@ int main(int argc, char** argv)
 //    string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
     string in_filepath;
     string out_filepath;
-
     string app_list;
-  
     vector<string> req_inputfiles;
+
+    int trial = 3; 
+
+
     ReadDirectory(in_dir_name, req_inputfiles);
 
     for(int i = 0; i < req_inputfiles.size(); i++) {
 	// set full in/out path 
 	in_filepath = in_dir_name + req_inputfiles[i];
 	out_filepath = out_dir_name + "O" + req_inputfiles[i].substr(1, req_inputfiles[i].size());
+	// Build Section
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
+	SettingModelParameters(algo_cmd, app_list, deadline_n);
+	BuildAll();
+	cout << "BUILD finished" << endl;
+	// Build Section end
 
-	cout << in_filepath << endl;	
-	cout << out_filepath << endl;
-	cout << app_list << endl;
+	Write_file << "App_list: " << app_list << endl;
+	Write_file << "deadlineN: " << deadline_n << endl;
+	Write_file << "scheduling_window: " << batch_window << endl;
+
+	sleep(2);
+	cout << "Sleep...(2)" << endl;
 
 	Write_file.open(out_filepath+"ALL", ios::out);	
 	Write_file_BIG.open(out_filepath + "C", ios::out);	
 	Write_file_GPU.open(out_filepath + "G", ios::out);	
 	Write_file_DSP.open(out_filepath + "D", ios::out);	
+	for(int j = 0; j < trial; j++) {
+		InitGlobalState();
 
-	InitGlobalState();
-	SettingModelParameters(algo_cmd, app_list, deadline_n);
+		Write_file << "Trial: " << j+1 << endl;
+		Write_file_BIG << "Trial: " << j+1 << endl;
+		Write_file_GPU << "Trial: " << j+1 << endl;
+		Write_file_DSP << "Trial: " << j+1 << endl;
+	}	
 
 	Write_file.close();
 	Write_file_BIG.close();
