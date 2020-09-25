@@ -49,6 +49,7 @@
 #include <sys/syscall.h> 
 #include <dirent.h>
 #include <algorithm>
+#include <thread>
 
 using namespace std; 
 
@@ -172,39 +173,6 @@ public:
 	}
 };
 
-/*
-typedef struct Task {
-	char id; // "Alexnet: a", "VGG: v", "Mnist: m", "Googlenet: g"
-	int layer_num;	
-	int batch_size;
-	int SNPE_index; // SNPE queue index
-	char dev; // BIG, GPU, DSP
-	int task_idx; // for Parent_queue
-	int deadline; // deadline
-	int emergency;
-	int total_layer_num;
-	float runtime;
-	float wruntime;
-	int est;
-
-	float est_runtime;  
-	int est_latency;	
-	int arrival_time; // defined arrival_time
-	int is_vio;
-
-	long int after_batch_decision_time; 
-	long int after_task_scheduler_time;
-
-	int wait_time; // wait_time
-
-	int real_arrival_time; // real arrival time
-	int real_latency;
-	int real_runtime;
-
-	int wait_queue_length; // waiting tasks in queue
-} Task;
-*/
-
 class Task {
 public:
 	char id; // "Alexnet: a", "VGG: v", "Mnist: m", "Googlenet: g"
@@ -226,12 +194,12 @@ public:
 	int est_latency;	
 	int is_vio;
 
-	long int after_batch_decision_time; 
+	long int batch_enqueue_time; 
 	long int after_task_scheduler_time;
 
 	int wait_time; // wait_time
 
-	int real_arrival_time; // real arrival time
+	//int real_arrival_time; // real arrival time
 	int real_latency;
 	int real_runtime;
 
@@ -253,6 +221,8 @@ bool execStatus = false;
 bool usingInitCaching = false;
 std::string bufferTypeStr = "ITENSOR";
 std::string userBufferSourceStr = "CPUBUFFER";
+
+vector<Task> Batch_queue;
 
 // Global variable 
 ofstream Write_file;
@@ -783,7 +753,88 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 		openFile.close();
 	}
         sort(Request_queue.begin(), Request_queue.end(), ARRIVAL_CMP);
+
+/*
+	for(int i = 0; i < Request_queue.size(); i++){
+		cout << Request_queue[i].id <<  " " << Request_queue[i].arrival_time << endl;
+	}
+*/
 }
+
+void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queue) {
+    	struct timeval tp; 
+	long int cur_time;
+	long int init_time;
+
+        int cur_window = -1; 
+        int iter_cnt = 0;
+	int START_flag = 1;
+
+	int vBIG_runtime = 0;
+	int vGPU_runtime = 0;
+	int vDSP_runtime = 0;
+	
+       	gettimeofday(&tp, NULL);  // Added
+	init_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+
+        while(Request_queue.size() > 0 || Batch_queue.size() > 0){ 
+		if(vBIG_runtime - batch_window > 0) vBIG_runtime -= batch_window;
+		else vBIG_runtime = 0;
+		if(vGPU_runtime - batch_window > 0) vGPU_runtime -= batch_window;
+		else vGPU_runtime = 0;
+		if(vDSP_runtime - batch_window > 0) vDSP_runtime -= batch_window;
+		else vDSP_runtime = 0;
+	
+                if(iter_cnt % batch_window == 0) {
+			cur_window = iter_cnt;
+       	        	while(Request_queue.size() > 0){ 
+                       		if(Request_queue.front().arrival_time <= cur_window) {
+                               		Task task = Request_queue.front();
+			
+					Task* new_task = new Task(task.id, task.arrival_time);
+
+        				gettimeofday(&tp, NULL);  // Added
+					new_task->batch_enqueue_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+					//new_task->real_arrival_time = new_task->after_batch_decision_time - init_time; 
+				
+					if(START_flag == 1) { 
+						Write_file << "START_TIME: " << new_task->batch_enqueue_time << endl;
+						START_flag = 0;
+					}
+                                	//cout << "START_time: " <<  task.id << " " << task.arrival_time << " " << task.batch_enqueue_time - init_time << endl;
+                                	//Write_file << "START_time: " <<  task.id << " " << task.arrival_time << " " << task.batch_enqueue_time << endl;
+
+					Batch_queue.push_back(*new_task);
+                                	Request_queue.erase(Request_queue.begin()); // erase first element
+                        	}
+                        	else
+                                	break;
+                	}
+		}
+
+		if(Batch_queue.size() > 0) {
+			Batch_queue.clear();
+		}
+		//cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
+
+        	gettimeofday(&tp, NULL);  // Added
+		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+		cur_time = cur_time - init_time;
+                //cout << "Cur_time: " << cur_time << endl;
+                //cout << "iter_cnt: " << iter_cnt << endl;
+
+		//Write_file << "[ " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << " ]" << endl;
+                //Write_file << "Req_time: " <<  iter_cnt << endl;
+                //Write_file << "Cur_time: " << cur_time << endl;
+	
+                iter_cnt += batch_window; 
+
+		if(iter_cnt - cur_time > 0)
+                	usleep(1000 * (iter_cnt - cur_time) );
+        }
+
+}
+
 
 int main(int argc, char** argv)
 {
@@ -795,10 +846,10 @@ int main(int argc, char** argv)
     int deadline_n = stoi(argv[3]); 
     int batch_window = stoi(argv[4]); 
 
-    string in_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Inputfiles/poisson_avlg/";
-    string out_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Output/poisson_avlg/";
-//    string in_dir_name = "/data/local/tmp/request_file/" + input_name  +"I/";
-//    string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
+//    string in_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Inputfiles/poisson_avlg/";
+//   string out_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Output/poisson_avlg/";
+    string in_dir_name = "/data/local/tmp/request_file/" + input_name  +"I/";
+    string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
     string in_filepath;
     string out_filepath;
     string app_list;
@@ -824,8 +875,8 @@ int main(int argc, char** argv)
 	Write_file << "deadlineN: " << deadline_n << endl;
 	Write_file << "scheduling_window: " << batch_window << endl;
 
-	//sleep(2);
-	//cout << "Sleep...(2)" << endl;
+	sleep(2);
+	cout << "Sleep...(2)" << endl;
 
 	Write_file.open(out_filepath+"ALL", ios::out);	
 	Write_file_BIG.open(out_filepath + "C", ios::out);	
@@ -840,12 +891,9 @@ int main(int argc, char** argv)
 		Write_file_GPU << "Trial: " << j+1 << endl;
 		Write_file_DSP << "Trial: " << j+1 << endl;
    		GenerateRequestQueue(Request_queue, in_filepath);
-
-/*
-		for(int k = 0; k < Request_queue.size(); k++){
-			cout << Request_queue[k].id <<  " " << Request_queue[k].arrival_time << endl;
-		}
-*/
+		
+		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
+		RequestManagerThread.join();
 	}	
 
 	Write_file.close();
