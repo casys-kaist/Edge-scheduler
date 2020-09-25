@@ -48,6 +48,7 @@
 #include <unistd.h> 
 #include <sys/syscall.h> 
 #include <dirent.h>
+#include <algorithm>
 
 using namespace std; 
 
@@ -754,6 +755,16 @@ void BuildAll() {
 	}
 }
 
+bool ARRIVAL_CMP(const Task &p1, const Task &p2){
+    if(p1.arrival_time < p2.arrival_time){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+
 void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 	string filePath = filepath;
 	ifstream openFile(filePath.data());
@@ -763,21 +774,15 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 	
 		while(getline(openFile, line)){
 			string delimiter = ":";
-	
 			string task_name = line.substr(0, line.find(delimiter));
 			string arrival_time = line.substr(line.find(delimiter) + 1, line.size());
 
-/*
-			Task* task = (Task *)malloc(sizeof(Task));
-			task->id = task_name[0];
-			task->arrival_time = stoi(arrival_time);	
-*/
 			Task* task = new Task(task_name[0], stoi(arrival_time));
 			Request_queue.push_back(*task);
 		}
 		openFile.close();
 	}
-      //  sort(Request_queue.begin(), Request_queue.end(), arrival_cmp);
+        sort(Request_queue.begin(), Request_queue.end(), ARRIVAL_CMP);
 }
 
 int main(int argc, char** argv)
@@ -836,9 +841,11 @@ int main(int argc, char** argv)
 		Write_file_DSP << "Trial: " << j+1 << endl;
    		GenerateRequestQueue(Request_queue, in_filepath);
 
+/*
 		for(int k = 0; k < Request_queue.size(); k++){
 			cout << Request_queue[k].id <<  " " << Request_queue[k].arrival_time << endl;
 		}
+*/
 	}	
 
 	Write_file.close();
