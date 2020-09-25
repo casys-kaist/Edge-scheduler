@@ -835,6 +835,27 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
 }
 
+// Layer Execution (start from input tensor)
+zdl::DlSystem::TensorMap LayerExecute(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,std::unique_ptr<zdl::DlSystem::ITensor>& input_ptr, int index, char app_id, char dev) {
+    	struct timeval tp; // Added
+        long int before_part, after_part; // Added 
+        gettimeofday(&tp, NULL);  // Added
+   	before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+
+	auto& SNPE = model_ptr; 
+	auto& input = input_ptr;
+	bool execStatus = false;
+
+        zdl::DlSystem::TensorMap outputTensorMap;
+
+	execStatus = SNPE.at(index)->execute(input.get(), outputTensorMap); 
+        gettimeofday(&tp, NULL);  // Added
+        after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+        Write_file << app_id  << " " << dev << " Execute " << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+
+	return outputTensorMap;	
+}
+
 
 int main(int argc, char** argv)
 {
