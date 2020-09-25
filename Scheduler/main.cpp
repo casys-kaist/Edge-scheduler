@@ -171,6 +171,78 @@ public:
 	}
 };
 
+/*
+typedef struct Task {
+	char id; // "Alexnet: a", "VGG: v", "Mnist: m", "Googlenet: g"
+	int layer_num;	
+	int batch_size;
+	int SNPE_index; // SNPE queue index
+	char dev; // BIG, GPU, DSP
+	int task_idx; // for Parent_queue
+	int deadline; // deadline
+	int emergency;
+	int total_layer_num;
+	float runtime;
+	float wruntime;
+	int est;
+
+	float est_runtime;  
+	int est_latency;	
+	int arrival_time; // defined arrival_time
+	int is_vio;
+
+	long int after_batch_decision_time; 
+	long int after_task_scheduler_time;
+
+	int wait_time; // wait_time
+
+	int real_arrival_time; // real arrival time
+	int real_latency;
+	int real_runtime;
+
+	int wait_queue_length; // waiting tasks in queue
+} Task;
+*/
+
+class Task {
+public:
+	char id; // "Alexnet: a", "VGG: v", "Mnist: m", "Googlenet: g"
+	int arrival_time; // defined arrival_time
+
+	int layer_num;	
+	int batch_size;
+	int SNPE_index; // SNPE queue index
+	char dev; // BIG, GPU, DSP
+	int task_idx; // for Parent_queue
+	int deadline; // deadline
+	int emergency;
+	int total_layer_num;
+	float runtime;
+	float wruntime;
+	int est;
+
+	float est_runtime;  
+	int est_latency;	
+	int is_vio;
+
+	long int after_batch_decision_time; 
+	long int after_task_scheduler_time;
+
+	int wait_time; // wait_time
+
+	int real_arrival_time; // real arrival time
+	int real_latency;
+	int real_runtime;
+
+	int wait_queue_length; // waiting tasks in queue
+
+        Task(char _id, int _arrival_time){
+		id = _id;
+		arrival_time = _arrival_time;
+	}
+};
+
+
 
 // Global constant variable
 enum {UNKNOWN, USERBUFFER_FLOAT, USERBUFFER_TF8, ITENSOR};
@@ -328,12 +400,14 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 	}
 	// end
 	
+/*
 	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 	cout << Model_Par_List.size() << endl;
 	for(int i = 0; i < Model_Par_List.size(); i++) {
 		Model_Par_List[i].PrintParameters();
 		cout << "=========================================================" << endl;
 	}
+*/
 }
 
 std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string device, int batchSize) {
@@ -680,8 +754,31 @@ void BuildAll() {
 	}
 }
 
+void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
+	string filePath = filepath;
+	ifstream openFile(filePath.data());
 
+	if( openFile.is_open() ){
+		string line;
+	
+		while(getline(openFile, line)){
+			string delimiter = ":";
+	
+			string task_name = line.substr(0, line.find(delimiter));
+			string arrival_time = line.substr(line.find(delimiter) + 1, line.size());
 
+/*
+			Task* task = (Task *)malloc(sizeof(Task));
+			task->id = task_name[0];
+			task->arrival_time = stoi(arrival_time);	
+*/
+			Task* task = new Task(task_name[0], stoi(arrival_time));
+			Request_queue.push_back(*task);
+		}
+		openFile.close();
+	}
+      //  sort(Request_queue.begin(), Request_queue.end(), arrival_cmp);
+}
 
 int main(int argc, char** argv)
 {
@@ -702,8 +799,7 @@ int main(int argc, char** argv)
     string app_list;
     vector<string> req_inputfiles;
 
-    int trial = 3; 
-
+    int trial = 1; 
 
     ReadDirectory(in_dir_name, req_inputfiles);
 
@@ -715,7 +811,7 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
-	BuildAll();
+	//BuildAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
 
@@ -723,8 +819,8 @@ int main(int argc, char** argv)
 	Write_file << "deadlineN: " << deadline_n << endl;
 	Write_file << "scheduling_window: " << batch_window << endl;
 
-	sleep(2);
-	cout << "Sleep...(2)" << endl;
+	//sleep(2);
+	//cout << "Sleep...(2)" << endl;
 
 	Write_file.open(out_filepath+"ALL", ios::out);	
 	Write_file_BIG.open(out_filepath + "C", ios::out);	
@@ -732,11 +828,17 @@ int main(int argc, char** argv)
 	Write_file_DSP.open(out_filepath + "D", ios::out);	
 	for(int j = 0; j < trial; j++) {
 		InitGlobalState();
+		vector<Task> Request_queue;
 
 		Write_file << "Trial: " << j+1 << endl;
 		Write_file_BIG << "Trial: " << j+1 << endl;
 		Write_file_GPU << "Trial: " << j+1 << endl;
 		Write_file_DSP << "Trial: " << j+1 << endl;
+   		GenerateRequestQueue(Request_queue, in_filepath);
+
+		for(int k = 0; k < Request_queue.size(); k++){
+			cout << Request_queue[k].id <<  " " << Request_queue[k].arrival_time << endl;
+		}
 	}	
 
 	Write_file.close();
