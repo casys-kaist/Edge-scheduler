@@ -15,7 +15,7 @@ Please refer to https://developer.qualcomm.com/software/qualcomm-neural-processi
 $ cp main.cpp ~/snpe-sdk/examples/NativeCpp/SampleCode/jni/main.cpp
 ```
 
-## Build SNPE frame
+## Build SNPE framework
 ```
 $ cd ~/snpe-sdk/
 $ export ANDROID_NDK_ROOT=~/Android/Sdk/ndk-bundle # default location for Android Studio, replace with yours
