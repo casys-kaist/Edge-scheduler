@@ -418,6 +418,8 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 				model_par = new Model_Parameter('v', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			}
 			else {
+				model_par = new Model_Parameter('v', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
+				model_par = new Model_Parameter('v', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('v', 1, 4, "GGGG", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('v', 1, 4, "DDDD", "0", deadline); Model_Par_List.push_back(*model_par);
 			}
@@ -464,7 +466,8 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 				model_par = new Model_Parameter('y', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('y', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('y', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
-				//model_par = new Model_Parameter('y', 1, 4, "GGGG", "0", deadline); Model_Par_List.push_back(*model_par);
+				model_par = new Model_Parameter('y', 1, 4, "GGGG", "0", deadline); Model_Par_List.push_back(*model_par);
+				model_par = new Model_Parameter('y', 1, 4, "DDDD", "0", deadline); Model_Par_List.push_back(*model_par);
 			}
 		}
 		else if(app_list[i] == 'f') { // faster RCNN
