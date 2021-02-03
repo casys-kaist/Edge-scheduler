@@ -176,6 +176,9 @@ public:
 	string device;
 	string ver;
 	int deadline;
+	
+	float exp_runtime; // expected runtime
+	float exp_latency; // expected latency
 
 	float BIG_runtime[4];	
 	float GPU_runtime[4];	
@@ -310,10 +313,9 @@ public:
 	int total_layer_num;
 	float runtime;
 	float wruntime;
-	int est;
 
-	float est_runtime;  
-	int est_latency;	
+	float exp_runtime; // expected runtime
+	float exp_latency; // expected latency
 	int is_vio;
 
 	long int batch_enqueue_time; 
@@ -838,6 +840,66 @@ bool ARRIVAL_CMP(const Task &p1, const Task &p2){
     }
 }
 
+void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
+
+/*
+	if(selected->layer_cnt >= 2) {
+		Parent_queue.push_back(Task_index);
+		PParent_queue.push_back(Task_index);
+		PPParent_queue.push_back(Task_index);
+	}
+*/
+
+	// Generate and Enqueue Task
+	for(int i = 0; i < selected->num_layers; i++) {
+		Task* new_task = new Task(task->id, task->arrival_time);
+
+		new_task->layer_num = i;		
+		new_task->batch_size = task->batch_size;
+//		new_task->SNPE_index = selected->SNPE_index[i];
+		new_task->dev = selected->device[i];
+		new_task->task_idx = Task_index;		
+		new_task->deadline = selected->deadline;
+		if(emergency_on)
+			new_task->emergency = 1;
+		else 
+			new_task->emergency = 0;
+		new_task->total_layer_num = selected->num_layers;
+
+//		new_task->real_arrival_time = task->real_arrival_time; // necessary? 
+	
+		new_task->exp_latency = selected->exp_latency;
+		new_task->exp_runtime = selected->exp_runtime;
+//		new_task->is_vio = est_deadline_check(selected->deadline, selected->exp_latency);
+
+		new_task->batch_enqueue_time = task->batch_enqueue_time;
+		new_task->after_task_scheduler_time = 0;
+
+		new_task->wait_time = 0;		
+		
+		if(new_task->dev == 'B'){
+			new_task->runtime = selected->BIG_runtime[i];
+			new_task->wruntime = selected->BIG_runtime[i];
+//			new_task->wait_queue_length = BIG_queue.size();
+//			BIG_queue.push_back(*new_task);
+		}
+		else if(new_task->dev == 'G'){ 
+			new_task->runtime = selected->GPU_runtime[i];
+			new_task->wruntime = selected->GPU_runtime[i];
+//			new_task->wait_queue_length = GPU_queue.size();
+//			GPU_queue.push_back(*new_task);
+		}
+		else if(new_task->dev == 'D'){ 
+			new_task->runtime = selected->DSP_runtime[i];
+			new_task->wruntime = selected->DSP_runtime[i];
+//			new_task->wait_queue_length = DSP_queue.size();
+//			DSP_queue.push_back(*new_task);
+		}
+	}
+ 	Task_index++; // increase global task index
+}
+
+
 
 void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 	string filePath = filepath;
@@ -938,21 +1000,21 @@ void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int*
 		Model_Parameter* selected = &candidate_set[i][idx];			
 	
 		if(selected->device[0] == 'B') {
-			//selected->est_runtime = selected->BIG_runtime[0]; // runtime
+			selected->exp_runtime = selected->BIG_runtime[0]; // runtime
 			(*vBIG_runtime) += selected->BIG_runtime[0];
-			//selected->est_latency = (*vDSP_runtime); // latency
+			selected->exp_latency = (*vDSP_runtime); // latency
 		}
 		else if(selected->device[0] == 'G') {
-			//selected->est_runtime = selected->GPU_runtime[0]; // runtime
+			selected->exp_runtime = selected->GPU_runtime[0]; // runtime
 			(*vGPU_runtime) += selected->GPU_runtime[0];
-			//selected->est_latency = (*vGPU_runtime); // latency
+			selected->exp_latency = (*vGPU_runtime); // latency
 		}
 		else if(selected->device[0] == 'D') {
-			//selected->est_runtime = selected->DSP_runtime[0]; // runtime
+			selected->exp_runtime = selected->DSP_runtime[0]; // runtime
 			(*vDSP_runtime) += selected->DSP_runtime[0];
-			//selected->est_latency = (*vDSP_runtime); // latency
+			selected->exp_latency = (*vDSP_runtime); // latency
 		}
-		//create_from_model(selected, &Batch_queue[i], EMERGENCY_OFF);
+		EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 	}
 
 }
