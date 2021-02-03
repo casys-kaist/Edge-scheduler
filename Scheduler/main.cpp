@@ -149,6 +149,11 @@ public:
 	string ver;
 	int deadline;
 
+	int urgent; // for SLO 
+	float BIG_runtime[4];	
+	float GPU_runtime[4];	
+	float DSP_runtime[4];	
+
         Model_Parameter(char _id, int _batch, int _num_layers, string _device, string _ver, int _deadline){
 		id = _id;	
 		batch = _batch;
@@ -156,6 +161,7 @@ public:
 		device = _device;
 		ver = _ver;
 		deadline = _deadline;
+		urgent = 0;
         }
 
 	void SetSnpeIndex(int _snpe_index) {
@@ -573,11 +579,11 @@ std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::uni
 
 void BuildSnpeModelAll() {
     const char* app_inputFile; 
-    std::string app_OutputDir;
-    std::string app_layerPath;
-
+    string app_OutputDir;
+    string app_layerPath;
     int model_num = 0;
     char prev_id;
+
     for(int i = 0; i < Model_Par_List.size(); i++) {
   	Model_Parameter* mp = &Model_Par_List[i];
 	
