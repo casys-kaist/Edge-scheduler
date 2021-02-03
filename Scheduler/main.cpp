@@ -20,6 +20,7 @@
 #include <string>
 #include <iterator>
 #include <unordered_map>
+#include <numeric>
 
 //#include "main.hpp"
 #include "CheckRuntime.hpp"
@@ -375,6 +376,23 @@ std::string GetAppList(std::string req_inputfile)
      string app_list = req_inputfile.substr(pos+1, req_inputfile.size());
      return app_list;
 }
+
+vector<vector<int> > Cartesian( vector<vector<int> >& v ) { 
+  auto product = []( long long a, vector<int>& b ) { return a*b.size(); };
+  const long long N = accumulate( v.begin(), v.end(), 1LL, product );
+  vector<vector<int> > all; 
+  vector<int> u(v.size());
+  for( long long n=0 ; n<N ; ++n ) { 
+    lldiv_t q { n, 0 };
+    for( long long i=v.size()-1 ; 0<=i ; --i ) { 
+      q = div( q.quot, v[i].size() );
+      u[i] = v[i][q.rem];
+    }   
+    all.push_back(u);
+  }
+  return all;
+}
+
 
 void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 	
@@ -848,6 +866,32 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 }
 
 void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int* vDSP_runtime) {
+	vector<vector<Model_Parameter> > candidate_set;
+
+	for(int i = 0; i < Batch_queue.size(); i++) {
+		vector<Model_Parameter> candidate;
+		char app_id = Batch_queue[i].id;
+
+		for(int j = 0; j < Model_Par_List.size(); j++) {
+			if(Model_Par_List[j].id == app_id && Model_Par_List[j].num_layers == 1) 
+			{
+				candidate.push_back( Model_Par_List[j] ); 
+			}
+		}	
+		candidate_set.push_back( candidate );	
+	}
+	vector<vector<int> > all_cand_idx; 	
+	vector<vector<int> > all_combi; 	
+		
+	for(int i = 0; i < candidate_set.size(); i++) {
+		vector<int> cand_idx;	
+		vector<Model_Parameter> model_cand = candidate_set[i];	
+		for(int j = 0; j < model_cand.size(); j++) 
+			cand_idx.push_back(j);
+		all_cand_idx.push_back(cand_idx);	
+	}
+	all_combi = Cartesian(all_cand_idx);	
+
 }
 
 
@@ -1002,7 +1046,6 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
-	break;
 	BuildSnpeModelAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
