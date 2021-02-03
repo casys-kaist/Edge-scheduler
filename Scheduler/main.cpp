@@ -137,7 +137,34 @@ std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_squeezenet;
 std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_yolov2;
 std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_frcnn;
 
-
+// **** ALL values are average
+float alexnet_big = 106.0;
+float alexnet_gpu = 20.35;
+float alexnet_dsp = 23.0;
+float vgg_big = 1150.3;
+float vgg_gpu = 264.5;
+float vgg_dsp = 100.1;
+float lenet_big = 5.0;
+float lenet_gpu = 5.3;
+float lenet_dsp = 7.0;
+float googlenet_big = 330.1;
+float googlenet_gpu = 28.6;
+float googlenet_dsp = 18.9;
+float resnet_big = 501.8;
+float resnet_gpu = 58.4;
+float resnet_dsp = 36.8;
+float mobilenet_big = 742.4;
+float mobilenet_gpu = 13.2;
+float mobilenet_dsp = 13.1;
+float squeezenet_big = 182.4;
+float squeezenet_gpu = 16.9;
+float squeezenet_dsp = 12.9;
+float yolov2_big = 253.9;
+float yolov2_gpu = 48.1;
+float yolov2_dsp = 48.9;
+float frcnn_big = 105.4;
+float frcnn_gpu = 20.2;
+float frcnn_dsp = 20.5;
 
 class Model_Parameter {
 public:
@@ -161,11 +188,21 @@ public:
 		device = _device;
 		ver = _ver;
 		deadline = _deadline;
+
 		urgent = 0;
         }
 
 	void SetSnpeIndex(int _snpe_index) {
 		snpe_index = _snpe_index;
+	}
+	
+	void InitModelProfiledRuntime(char _id, string _device) {
+		// init runtime
+		for(int i = 0; i < num_layers; i++) {
+			BIG_runtime[i] = 999999;
+			GPU_runtime[i] = 999999;
+			DSP_runtime[i] = 999999;
+		}
 	}
 	
 	void PrintParameters() {
