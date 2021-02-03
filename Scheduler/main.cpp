@@ -722,6 +722,10 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 */
 }
 
+void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int* vDSP_runtime) {
+}
+
+
 void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queue) {
     	struct timeval tp; 
 	long int cur_time;
