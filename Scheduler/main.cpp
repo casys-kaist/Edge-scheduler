@@ -868,6 +868,7 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int* vDSP_runtime) {
 	vector<vector<Model_Parameter> > candidate_set;
 
+	// Prepare all candidate set
 	for(int i = 0; i < Batch_queue.size(); i++) {
 		vector<Model_Parameter> candidate;
 		char app_id = Batch_queue[i].id;
@@ -891,6 +892,45 @@ void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int*
 		all_cand_idx.push_back(cand_idx);	
 	}
 	all_combi = Cartesian(all_cand_idx);	
+
+	//cout << "ALL combi: " << all_combi.size() << endl;
+
+	// Find MAEL (Min-Average-Estimated-Latency)
+	vector<int> sum_latency_set;
+	for(int i = 0; i < all_combi.size(); i++) {
+		int idx;
+		float sum_latency = 0;
+
+		int vBIG_sum_tmp = *vBIG_runtime;
+		int vGPU_sum_tmp = *vGPU_runtime;
+		int vDSP_sum_tmp = *vDSP_runtime;
+
+		//cout << "CURRENT: " << *vBIG_runtime << " " << *vGPU_runtime << " " << *vDSP_runtime << endl;
+		for(int j = 0; j < all_combi[i].size(); j++) {
+			vector<Model_Parameter> model_cand = candidate_set[j];	
+			idx = all_combi[i][j]; 		
+
+			// calculate if new task is run on each device
+			if(model_cand[idx].device[0] == 'B') {
+				vBIG_sum_tmp += model_cand[idx].BIG_runtime[0];
+				sum_latency += vBIG_sum_tmp;	
+			}
+			else if(model_cand[idx].device[0] == 'G') {
+				vGPU_sum_tmp += model_cand[idx].GPU_runtime[0];
+				sum_latency += vGPU_sum_tmp;	
+			}
+			else if(model_cand[idx].device[0] == 'D') {
+				vDSP_sum_tmp += model_cand[idx].DSP_runtime[0];
+				sum_latency += vDSP_sum_tmp;	
+			}
+		}
+		//cout << "Sum latency: " << sum_latency << endl;
+		sum_latency_set.push_back(sum_latency);
+	}
+	int min = *min_element(sum_latency_set.begin(), sum_latency_set.end());
+	int min_idx = -1;
+	vector<int>::iterator it = find(sum_latency_set.begin(), sum_latency_set.end(), min);
+	min_idx = distance(sum_latency_set.begin(), it);
 
 }
 
@@ -1039,6 +1079,9 @@ int main(int argc, char** argv)
     ReadDirectory(in_dir_name, req_inputfiles);
 
     for(int i = 0; i < req_inputfiles.size(); i++) {
+	// Init global state
+	InitGlobalState();
+
 	// set full in/out path 
 	in_filepath = in_dir_name + req_inputfiles[i];
 	out_filepath = out_dir_name + "O" + req_inputfiles[i].substr(1, req_inputfiles[i].size());
@@ -1062,7 +1105,6 @@ int main(int argc, char** argv)
 	Write_file_GPU.open(out_filepath + "G", ios::out);	
 	Write_file_DSP.open(out_filepath + "D", ios::out);	
 	for(int j = 0; j < trial; j++) {
-		InitGlobalState();
 		vector<Task> Request_queue;
 
 		Write_file << "Trial: " << j+1 << endl;
