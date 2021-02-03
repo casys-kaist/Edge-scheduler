@@ -932,6 +932,29 @@ void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int*
 	vector<int>::iterator it = find(sum_latency_set.begin(), sum_latency_set.end(), min);
 	min_idx = distance(sum_latency_set.begin(), it);
 
+	// Update Device Runtime and Generate Task 
+	for(int i = 0; i < all_combi[min_idx].size(); i++)  {
+		int idx = all_combi[min_idx][i];
+		Model_Parameter* selected = &candidate_set[i][idx];			
+	
+		if(selected->device[0] == 'B') {
+			//selected->est_runtime = selected->BIG_runtime[0]; // runtime
+			(*vBIG_runtime) += selected->BIG_runtime[0];
+			//selected->est_latency = (*vDSP_runtime); // latency
+		}
+		else if(selected->device[0] == 'G') {
+			//selected->est_runtime = selected->GPU_runtime[0]; // runtime
+			(*vGPU_runtime) += selected->GPU_runtime[0];
+			//selected->est_latency = (*vGPU_runtime); // latency
+		}
+		else if(selected->device[0] == 'D') {
+			//selected->est_runtime = selected->DSP_runtime[0]; // runtime
+			(*vDSP_runtime) += selected->DSP_runtime[0];
+			//selected->est_latency = (*vDSP_runtime); // latency
+		}
+		//create_from_model(selected, &Batch_queue[i], EMERGENCY_OFF);
+	}
+
 }
 
 
