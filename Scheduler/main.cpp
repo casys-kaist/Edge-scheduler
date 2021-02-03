@@ -176,7 +176,6 @@ public:
 	string ver;
 	int deadline;
 
-	int urgent; // for SLO 
 	float BIG_runtime[4];	
 	float GPU_runtime[4];	
 	float DSP_runtime[4];	
@@ -188,21 +187,94 @@ public:
 		device = _device;
 		ver = _ver;
 		deadline = _deadline;
-
-		urgent = 0;
         }
 
 	void SetSnpeIndex(int _snpe_index) {
 		snpe_index = _snpe_index;
 	}
 	
-	void InitModelProfiledRuntime(char _id, string _device) {
+	void InitModelProfiledRuntime(char _id, string _device, int _num_layers) {
 		// init runtime
-		for(int i = 0; i < num_layers; i++) {
+		for(int i = 0; i < _num_layers; i++) {
 			BIG_runtime[i] = 999999;
 			GPU_runtime[i] = 999999;
 			DSP_runtime[i] = 999999;
 		}
+
+		// vgg 4 layers for DSP
+		if(_id == 'v' && _device[0] == 'D' && _num_layers == 4) {
+			DSP_runtime[0] = 32;
+			DSP_runtime[1] = 29;
+			DSP_runtime[2] = 24;
+			DSP_runtime[3] = 20;
+		}
+		// vgg 4 layers for GPU
+		else if(_id == 'v' && _device[0] == 'G' && _num_layers == 4) {
+			GPU_runtime[0] = 88;
+			GPU_runtime[1] = 60;
+			GPU_runtime[2] = 49;
+			GPU_runtime[3] = 97;
+		}
+		// yolov2tiny 4 layers for DSP
+		else if(_id == 'y' && _device[0] == 'D' && _num_layers == 4) {
+			DSP_runtime[0] = 16;
+			DSP_runtime[1] = 8;
+			DSP_runtime[2] = 11;
+			DSP_runtime[3] = 28;
+		}
+		// yolov2tiny 4 layers for GPU
+		else if(_id == 'y' && _device[0] == 'G' && _num_layers == 4) {
+			GPU_runtime[0] = 11;
+			GPU_runtime[1] = 12;
+			GPU_runtime[2] = 20;
+			GPU_runtime[3] = 18;
+		}
+		else if(_id == 'a' && _num_layers == 1) { // Alexnet 
+			if(_device[0] == 'B') BIG_runtime[0] = alexnet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = alexnet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = alexnet_dsp;
+		}
+		else if(_id == 'v' && _num_layers == 1) { // VGG 
+			if(_device[0] == 'B') BIG_runtime[0] = vgg_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = vgg_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = vgg_dsp;
+		}
+		else if(_id == 'l' && _num_layers == 1) { // lenet
+			if(_device[0] == 'B') BIG_runtime[0] = lenet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = lenet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = lenet_dsp;
+		}
+		else if(_id == 'g' && _num_layers == 1) { // googlenet
+			if(_device[0] == 'B') BIG_runtime[0] = googlenet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = googlenet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = googlenet_dsp;
+		}
+		else if(_id == 'r' && _num_layers == 1) { // resnet50
+			if(_device[0] == 'B') BIG_runtime[0] = resnet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = resnet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = resnet_dsp;
+		}
+		else if(_id == 'm' && _num_layers == 1) { // mobilenet
+			if(_device[0] == 'B') BIG_runtime[0] = mobilenet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = mobilenet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = mobilenet_dsp;
+		}
+		else if(_id == 's' && _num_layers == 1) { // squeezenet
+			if(_device[0] == 'B') BIG_runtime[0] = squeezenet_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = squeezenet_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = squeezenet_dsp;
+		}
+		else if(_id == 'y' && _num_layers == 1) { // yolov2
+			if(_device[0] == 'B') BIG_runtime[0] = yolov2_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = yolov2_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = yolov2_dsp;
+		}
+		else if(_id == 'f' && _num_layers == 1) { // faster rcnn
+			if(_device[0] == 'B') BIG_runtime[0] = frcnn_big;
+			else if(_device[0] == 'G') GPU_runtime[0] = frcnn_gpu;
+			else if(_device[0] == 'D') DSP_runtime[0] = frcnn_dsp;
+		}
+
 	}
 	
 	void PrintParameters() {
@@ -213,6 +285,12 @@ public:
 		cout << "Device: " << device  << endl;
 		cout << "Version: " << ver  << endl;
 		cout << "Deadline: " << deadline  << endl;
+
+		for(int i = 0; i < num_layers; i++) {
+			cout << "CPU " << i << " layer Runtime: " << BIG_runtime[i] << endl;
+			cout << "GPU " << i << " layer Runtime: " << GPU_runtime[i] << endl;
+			cout << "DSP " << i << " layer Runtime: " << DSP_runtime[i] << endl;
+		}
 	}
 };
 
@@ -408,6 +486,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		}
 		snpe_start_index += mp->num_layers;	
 		mp->SetSnpeIndex(snpe_start_index - mp->num_layers);
+		mp->InitModelProfiledRuntime(mp->id, mp->device, mp->num_layers); 
 	}
 	// end
 	
@@ -920,6 +999,7 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
+	break;
 	BuildSnpeModelAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
