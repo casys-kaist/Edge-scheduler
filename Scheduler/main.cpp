@@ -291,7 +291,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 			}
 		}
 		else if(app_list[i] == 'v') { // vgg
-    			deadline = 91 * deadlineN;	
+    			deadline = 100 * deadlineN;	
 			if(algo_cmd.compare("slo_div") != 0) {
 				model_par = new Model_Parameter('v', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('v', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -309,7 +309,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		}
 		else if(app_list[i] == 'g') { // googlenet
     			//deadline = 16 * deadlineN;	
-    			deadline = 27 * deadlineN;	
+    			deadline = 18.9 * deadlineN;	
 			model_par = new Model_Parameter('g', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('g', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('g', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -321,21 +321,19 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 			model_par = new Model_Parameter('r', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
 		}
 		else if(app_list[i] == 'm') { // mobileNet
-    			//deadline = 12 * deadlineN;	
-    			deadline = 21 * deadlineN;	
+    			deadline = 13.1 * deadlineN;	
 			model_par = new Model_Parameter('m', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('m', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('m', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
 		}
 		else if(app_list[i] == 's') { // SqueezeNet
-    			//deadline = 12 * deadlineN;	
-    			deadline = 19 * deadlineN;	
+    			deadline = 12.9 * deadlineN;	
 			model_par = new Model_Parameter('s', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('s', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('s', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
 		}
 		else if(app_list[i] == 'y') { // yoloV2tiny
-    			deadline = 47 * deadlineN;	
+    			deadline = 48.1 * deadlineN;	
 			if(algo_cmd.compare("slo_div") != 0) {
 				model_par = new Model_Parameter('y', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('y', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -349,8 +347,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 			}
 		}
 		else if(app_list[i] == 'f') { // faster RCNN
-    			//deadline = 20 * deadlineN;	
-    			deadline = 23 * deadlineN;	
+    			deadline = 20.2 * deadlineN;	
 			model_par = new Model_Parameter('f', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('f', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			model_par = new Model_Parameter('f', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -371,14 +368,12 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 	}
 	// end
 	
-/*
 	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 	cout << Model_Par_List.size() << endl;
 	for(int i = 0; i < Model_Par_List.size(); i++) {
 		Model_Par_List[i].PrintParameters();
 		cout << "=========================================================" << endl;
 	}
-*/
 }
 
 std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string device, int batchSize) {
@@ -425,20 +420,11 @@ std::unique_ptr<zdl::SNPE::SNPE> BuildDNNModel(std::string dlc, std::string Outp
     zdl::DlSystem::Runtime_t runtime = zdl::DlSystem::Runtime_t::CPU;
 
     if (device[0] == 'g') 
-    {
-	cout << "<<<<< GPU >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::GPU;
-    }
     else if (device[0] == 'd') 
-    {
-	cout << "<<<<< DSP >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::DSP;
-    }
     else if (device[0] == 'c') 
-    {
-	cout << "<<<<< CPU >>>>> " << endl;
         runtime = zdl::DlSystem::Runtime_t::CPU;
-    }
     runtime = checkRuntime(runtime);
     std::unique_ptr<zdl::DlContainer::IDlContainer> container = loadContainerFromFile(dlc);
     if (container == nullptr)
@@ -528,8 +514,11 @@ void BuildModelAll(std::string app_OutputDir,std::string app_layerPath, std::str
 	
 	std::unique_ptr<zdl::SNPE::SNPE> snpe = BuildDNNModel(app_layerPath_full, app_OutputDir, bufferTypeStr, userBufferSourceStr, device, batchSize);
 	SNPE_vec.push_back(std::move(snpe));	
+
+	cout << app_layerPath << ": "  << device << " finished" << endl; 
     }
 }
+
 
 std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr, std::vector<std::vector<float>>& input_ptr, int input_index, int start_index){
     auto& SNPE = model_ptr; 
@@ -562,9 +551,8 @@ std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::uni
    		std::unique_ptr<zdl::DlSystem::ITensor> input;
 		const auto &strList_opt = SNPE.at(start_index)->getInputTensorNames();
     		if (!strList_opt) throw std::runtime_error("Error obtaining Input tensor names");
-
     		const auto &strList = *strList_opt;
-    		if (strList.size() == 1) std::exit(FAILURE);
+    		assert (strList.size() == 1);
 
     		const auto &inputDims_opt = SNPE.at(start_index)->getInputDimensions(strList.at(0));
     		const auto &inputShape = *inputDims_opt;
@@ -583,7 +571,7 @@ std::unique_ptr<zdl::DlSystem::ITensor> GenerateInputTensor(std::vector<std::uni
     }
 }
 
-void BuildAll() {
+void BuildSnpeModelAll() {
     const char* app_inputFile; 
     std::string app_OutputDir;
     std::string app_layerPath;
@@ -597,13 +585,10 @@ void BuildAll() {
 		prev_id = mp->id;	
 		model_num = 0;	
 	}
-
+	
 	// Alexnet
 	if(mp->id == 'a') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = alexnet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else 
-			app_layerPath = alexnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = alexnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = alexnet_OutputDir; 
 		app_inputFile = alexnet_inputFile;
 
@@ -613,10 +598,7 @@ void BuildAll() {
 	}
 	// VGG-16
 	else if(mp->id == 'v') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = vgg_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = vgg_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = vgg_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = vgg_OutputDir; 
 		app_inputFile = vgg_inputFile;
 
@@ -626,10 +608,7 @@ void BuildAll() {
 	}
 	// LeNet
 	else if(mp->id == 'l') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = mnist_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = mnist_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = mnist_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = mnist_OutputDir; 
 		app_inputFile = mnist_inputFile;
 
@@ -640,13 +619,10 @@ void BuildAll() {
 
 	// GoogleNet
 	else if(mp->id == 'g') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = googlenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = googlenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = googlenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = googlenet_OutputDir; 
 		app_inputFile = googlenet_inputFile;
-
+		
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_googlenet);
   		PrefetchInputFile(app_OutputDir, &googlenet_inputs, app_inputFile, mp->batch);
   		googlenet_inputTensor.push_back(GenerateInputTensor(SNPE_googlenet, googlenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
@@ -654,10 +630,7 @@ void BuildAll() {
 
 	// ResNet-50
 	else if(mp->id == 'r') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = resnet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = resnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = resnet_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = resnet_OutputDir; 
 		app_inputFile = resnet_inputFile;
 
@@ -668,10 +641,7 @@ void BuildAll() {
 
 	// MobileNet
 	else if(mp->id == 'm') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = mobilenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = mobilenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = mobilenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = mobilenet_OutputDir; 
 		app_inputFile = mobilenet_inputFile;
 
@@ -682,10 +652,7 @@ void BuildAll() {
 
 	// SqueezeNet
 	else if(mp->id == 's') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = squeezenet_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = squeezenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = squeezenet_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = squeezenet_OutputDir; 
 		app_inputFile = squeezenet_inputFile;
 
@@ -696,10 +663,7 @@ void BuildAll() {
 
 	// YoloV2tiny
 	else if(mp->id == 'y') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = yolov2_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = yolov2_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = yolov2_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = yolov2_OutputDir; 
 		app_inputFile = yolov2_inputFile;
 
@@ -710,10 +674,7 @@ void BuildAll() {
 
 	// faster_rcnn
 	else if(mp->id == 'f') {
-		if(mp->num_layers == 2) 
- 			app_layerPath = frcnn_layerPath + to_string(mp->num_layers) + "_dlc_ver" + mp->ver + "/part";
-		else
-			app_layerPath = frcnn_layerPath + to_string(mp->num_layers) + "_dlc/part";
+		app_layerPath = frcnn_layerPath + to_string(mp->num_layers) + "_dlc/part";
     		app_OutputDir = frcnn_OutputDir; 
 		app_inputFile = frcnn_inputFile;
 
@@ -760,6 +721,7 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 	}
 */
 }
+
 
 void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queue) {
     	struct timeval tp; 
@@ -909,7 +871,7 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
-	//BuildAll();
+	BuildSnpeModelAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
 
@@ -935,7 +897,12 @@ int main(int argc, char** argv)
    		GenerateRequestQueue(Request_queue, in_filepath);
 		
 		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
+   		//pthread_create(&Task_scheduler_pid, NULL, Task_scheduler_my, NULL);
+		//thread SchedulerManagerThread(Task_scheduler_my, algo_cmd, batch_window, Request_queue );
+
 		RequestManagerThread.join();
+		//SchedulerManagerThread.join();
+		
 	}	
 
 	Write_file.close();
