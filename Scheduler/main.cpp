@@ -352,6 +352,12 @@ vector<Task> Batch_queue;
 vector<Task> BIG_queue;
 vector<Task> GPU_queue;
 vector<Task> DSP_queue;
+int BIG_RUN = 0;
+int GPU_RUN = 0;
+int DSP_RUN = 0;
+int Finished_BIG = 0; 
+int Finished_GPU = 0; 
+int Finished_DSP = 0; 
 
 #define EMERGENCY_ON 1
 #define EMERGENCY_OFF 0
@@ -367,6 +373,17 @@ ofstream Write_file_DSP;
 
 void InitGlobalState() {
 	Model_Par_List.clear();
+	Batch_queue.clear();
+	BIG_queue.clear();
+	GPU_queue.clear();
+	DSP_queue.clear();
+	Task_index = 0;
+	BIG_RUN = 0;
+	GPU_RUN = 0;
+	DSP_RUN = 0;
+	Finished_BIG = 0; 
+	Finished_GPU = 0; 
+	Finished_DSP = 0; 
 }
 
 void ReadDirectory(const std::string& name, vector<string>& v)
@@ -1109,6 +1126,49 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
 }
 
+void Task_scheduler_my() {
+
+    int BIG_check = 0;
+    int GPU_check = 0;
+    int DSP_check = 0;
+
+    if(BIG_queue.size() > 0) BIG_check = 1;
+    if(GPU_queue.size() > 0) GPU_check = 1;
+    if(DSP_queue.size() > 0) DSP_check = 1;
+
+    while(1) { 
+    	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
+
+		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
+			sleep(1);
+		}
+		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
+			sleep(1);
+		}
+		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
+			sleep(1);
+		}
+    	} 
+/*
+	if(sch_end_time - sch_start_time > 10) {
+		cout << "TIME OUT" << endl;	
+    		Write_file << "TIME_OUT" << endl;
+		sleep(1);
+		break;
+	}
+*/
+
+ 	if(Finished_BIG + Finished_GPU + Finished_DSP >= total_task) { 
+		sleep(1);
+		break;
+	}
+		
+    } // while loop
+
+}
+
+
+
 // Layer Execution (start from input tensor)
 zdl::DlSystem::TensorMap LayerExecution(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,std::unique_ptr<zdl::DlSystem::ITensor>& input_ptr, int index, char app_id, char dev) {
     	struct timeval tp;
@@ -1186,7 +1246,6 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
-	break;
 	BuildSnpeModelAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
@@ -1212,10 +1271,10 @@ int main(int argc, char** argv)
    		GenerateRequestQueue(Request_queue, in_filepath);
 		
 		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
-		//thread SchedulerManagerThread(Task_scheduler_my, algo_cmd, batch_window, Request_queue );
+		thread SchedulerManagerThread(Task_scheduler_my);
 
 		RequestManagerThread.join();
-		//SchedulerManagerThread.join();
+		SchedulerManagerThread.join();
 		
 	}	
 
