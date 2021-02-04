@@ -167,11 +167,6 @@ float frcnn_big = 105.4;
 float frcnn_gpu = 20.2;
 float frcnn_dsp = 20.5;
 
-// configurable values
-float SLO_alpha = 1.5;
-int Task_index = 0;
-#define EMERGENCY_ON 1
-#define EMERGENCY_OFF 0
 
 class Model_Parameter {
 public:
@@ -352,15 +347,22 @@ bool usingInitCaching = false;
 std::string bufferTypeStr = "ITENSOR";
 std::string userBufferSourceStr = "CPUBUFFER";
 
+vector<Model_Parameter> Model_Par_List;
 vector<Task> Batch_queue;
+vector<Task> BIG_queue;
+vector<Task> GPU_queue;
+vector<Task> DSP_queue;
+
+#define EMERGENCY_ON 1
+#define EMERGENCY_OFF 0
+float SLO_alpha = 1.5;
+int Task_index = 0;
 
 // Global variable 
 ofstream Write_file;
 ofstream Write_file_BIG;
 ofstream Write_file_GPU;
 ofstream Write_file_DSP;
-
-vector<Model_Parameter> Model_Par_List;
 
 
 void InitGlobalState() {
@@ -892,20 +894,20 @@ void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 		if(new_task->dev == 'B'){
 			new_task->runtime = selected->BIG_runtime[i];
 			new_task->wruntime = selected->BIG_runtime[i];
-//			new_task->wait_queue_length = BIG_queue.size();
-//			BIG_queue.push_back(*new_task);
+			new_task->wait_queue_length = BIG_queue.size();
+			BIG_queue.push_back(*new_task);
 		}
 		else if(new_task->dev == 'G'){ 
 			new_task->runtime = selected->GPU_runtime[i];
 			new_task->wruntime = selected->GPU_runtime[i];
-//			new_task->wait_queue_length = GPU_queue.size();
-//			GPU_queue.push_back(*new_task);
+			new_task->wait_queue_length = GPU_queue.size();
+			GPU_queue.push_back(*new_task);
 		}
 		else if(new_task->dev == 'D'){ 
 			new_task->runtime = selected->DSP_runtime[i];
 			new_task->wruntime = selected->DSP_runtime[i];
-//			new_task->wait_queue_length = DSP_queue.size();
-//			DSP_queue.push_back(*new_task);
+			new_task->wait_queue_length = DSP_queue.size();
+			DSP_queue.push_back(*new_task);
 		}
 	}
  	Task_index++; // increase global task index
