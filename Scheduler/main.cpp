@@ -1083,7 +1083,7 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
         				gettimeofday(&tp, NULL);  // Added
 					new_task->batch_enqueue_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
-					//new_task->real_arrival_time = new_task->after_batch_decision_time - init_time; 
+					//new_task->real_arrival_time = new_task->batch_enqueue_time - init_time; 
 				
 					if(START_flag == 1) { 
 						Write_file << "START_TIME: " << new_task->batch_enqueue_time << endl;
@@ -1106,7 +1106,7 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 				Batch_queue.clear();
 			}
 		}
-		//cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
+		cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
 
         	gettimeofday(&tp, NULL);  // Added
 		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
@@ -1126,7 +1126,7 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
 }
 
-void Task_scheduler_my() {
+void Task_scheduler_my(int Total_task) {
 
     int BIG_check = 0;
     int GPU_check = 0;
@@ -1140,13 +1140,13 @@ void Task_scheduler_my() {
     	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
 
 		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
-			sleep(1);
+
 		}
 		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
-			sleep(1);
+
 		}
 		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
-			sleep(1);
+
 		}
     	} 
 /*
@@ -1157,8 +1157,9 @@ void Task_scheduler_my() {
 		break;
 	}
 */
+   	cout << "Finished: " << Finished_BIG << " " <<  Finished_GPU << " " <<  Finished_DSP  << " = " << Finished_BIG + Finished_GPU + Finished_DSP  << " / " << Total_task << endl ;
 
- 	if(Finished_BIG + Finished_GPU + Finished_DSP >= total_task) { 
+ 	if(Finished_BIG + Finished_GPU + Finished_DSP >= Total_task) { 
 		sleep(1);
 		break;
 	}
@@ -1209,6 +1210,101 @@ zdl::DlSystem::TensorMap LayerExecution(std::vector<std::unique_ptr<zdl::SNPE::S
 
 	return outputTensorMap;	
 }
+
+void RunTask(Task* task){
+
+    struct timeval tp; // Added
+
+    gettimeofday(&tp, NULL);  // Added
+    long int before = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+	
+/*
+    if(task->id == 'a') {
+    	midTensorMap_alexnet = LayerExecution(SNPE_alexnet, alexnet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'v'){
+	if(task->dev == 'G')
+        	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[0], task->SNPE_index, task->id, task->dev);
+	else if(task->dev == 'D')
+        	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[1], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'p'){
+    	midTensorMap_pos = LayerExecution(SNPE_pos, pos_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'l'){
+    	midTensorMap_mnist = LayerExecution(SNPE_mnist, mnist_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'g'){
+    	midTensorMap_googlenet = LayerExecution(SNPE_googlenet, googlenet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'r'){
+    	midTensorMap_resnet = LayerExecution(SNPE_resnet, resnet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'm'){
+    	midTensorMap_mobilenet = LayerExecution(SNPE_mobilenet, mobilenet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 's'){
+    	midTensorMap_squeezenet = LayerExecution(SNPE_squeezenet, squeezenet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'y'){
+    	//midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+	if(task->dev == 'G')
+        	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[0], task->SNPE_index, task->id, task->dev);
+	else if(task->dev == 'D')
+        	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[1], task->SNPE_index, task->id, task->dev);
+    }
+    else if(task->id == 'f'){
+    	midTensorMap_frcnn = LayerExecution(SNPE_frcnn, frcnn_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
+    }
+*/
+
+    gettimeofday(&tp, NULL);  // Added
+    task->after_task_scheduler_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+
+    int real_latency = task->after_task_scheduler_time - task->batch_enqueue_time;
+    int real_runtime = task->after_task_scheduler_time - before;
+
+    std::cout << task->id << task->task_idx << " Latency: " << real_latency << " ms ";
+	cout << task->dev << " " << task->arrival_time <<  std::endl; //Added 
+
+/*
+    int parent_idx = task->task_idx;
+    for(int i = 0; i < Parent_queue.size(); i++) {
+ 	if(parent_idx == Parent_queue[i]) {
+		Parent_queue.erase(Parent_queue.begin() + i);
+		break;
+	}
+    }
+*/
+	sleep(1);
+   
+    if(task->dev == 'B'){
+	BIG_RUN = 0; 
+	if(task->total_layer_num == 1) {
+    		//Write_file_BIG << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
+    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
+		Finished_BIG++;
+	}
+    }
+		
+    else if(task->dev == 'G'){
+	GPU_RUN = 0;
+	if(task->total_layer_num == 1) {
+    		//Write_file_GPU << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
+    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
+		Finished_GPU++;
+	}
+    }
+    else if(task->dev == 'D'){
+	DSP_RUN = 0;
+	if(task->total_layer_num == 1) {
+    		//Write_file_DSP << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+		Finished_DSP++;
+	}
+    }
+}
+
 
 
 
@@ -1271,7 +1367,7 @@ int main(int argc, char** argv)
    		GenerateRequestQueue(Request_queue, in_filepath);
 		
 		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
-		thread SchedulerManagerThread(Task_scheduler_my);
+		thread SchedulerManagerThread(Task_scheduler_my, Request_queue.size());
 
 		RequestManagerThread.join();
 		SchedulerManagerThread.join();
