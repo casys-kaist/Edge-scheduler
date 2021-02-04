@@ -173,7 +173,7 @@ public:
 	char id;	
 	int batch;
 	int num_layers;
-	int snpe_index;
+	int SNPE_start_index;
 	string device;
 	string ver;
 	int deadline;
@@ -194,8 +194,8 @@ public:
 		deadline = _deadline;
         }
 
-	void SetSnpeIndex(int _snpe_index) {
-		snpe_index = _snpe_index;
+	void SetStartSnpeIndex(int _SNPE_start_index) {
+		SNPE_start_index = _SNPE_start_index;
 	}
 	
 	void InitModelProfiledRuntime(char _id, string _device, int _num_layers) {
@@ -286,7 +286,7 @@ public:
 		cout << "App id: " << id << endl;	
 		cout << "Batch: " << batch << endl;
 		cout << "Num layers: " << num_layers << endl; 
-		cout << "Snpe index: " << snpe_index << endl;
+		cout << "Snpe index: " << SNPE_start_index << endl;
 		cout << "Device: " << device  << endl;
 		cout << "Version: " << ver  << endl;
 		cout << "Deadline: " << deadline  << endl;
@@ -514,7 +514,6 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		}
 	}
 
-	// setting snpe start index 
 	int snpe_start_index = 0;	
 	char prev_id;
 	for(int i = 0; i < Model_Par_List.size(); i++) {
@@ -524,13 +523,12 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 			prev_id = mp->id;
 		}
 		snpe_start_index += mp->num_layers;	
-		mp->SetSnpeIndex(snpe_start_index - mp->num_layers);
+		mp->SetStartSnpeIndex(snpe_start_index - mp->num_layers);
 		mp->InitModelProfiledRuntime(mp->id, mp->device, mp->num_layers); 
 	}
-	// end
 	
-	cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
-	cout << Model_Par_List.size() << endl;
+	cout << "=========================================================" << endl;
+	cout << "Total Model list: " << Model_Par_List.size() << endl;
 	for(int i = 0; i < Model_Par_List.size(); i++) {
 		Model_Par_List[i].PrintParameters();
 		cout << "=========================================================" << endl;
@@ -755,7 +753,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_alexnet);
 		PrefetchInputFile(app_OutputDir, &alexnet_inputs, app_inputFile, mp->batch);
-   		alexnet_inputTensor.push_back(GenerateInputTensor(SNPE_alexnet, alexnet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+   		alexnet_inputTensor.push_back(GenerateInputTensor(SNPE_alexnet, alexnet_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 	// VGG-16
 	else if(mp->id == 'v') {
@@ -765,7 +763,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_vgg);
    		PrefetchInputFile(app_OutputDir, &vgg_inputs, app_inputFile, mp->batch);
-  		vgg_inputTensor.push_back(GenerateInputTensor(SNPE_vgg, vgg_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+  		vgg_inputTensor.push_back(GenerateInputTensor(SNPE_vgg, vgg_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 	// LeNet
 	else if(mp->id == 'l') {
@@ -775,7 +773,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_mnist);
  		PrefetchInputFile(app_OutputDir, &mnist_inputs, app_inputFile, mp->batch);
-  		mnist_inputTensor.push_back(GenerateInputTensor(SNPE_mnist, mnist_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+  		mnist_inputTensor.push_back(GenerateInputTensor(SNPE_mnist, mnist_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// GoogleNet
@@ -786,7 +784,7 @@ void BuildSnpeModelAll() {
 		
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_googlenet);
   		PrefetchInputFile(app_OutputDir, &googlenet_inputs, app_inputFile, mp->batch);
-  		googlenet_inputTensor.push_back(GenerateInputTensor(SNPE_googlenet, googlenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+  		googlenet_inputTensor.push_back(GenerateInputTensor(SNPE_googlenet, googlenet_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// ResNet-50
@@ -797,7 +795,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_resnet);
 		PrefetchInputFile(app_OutputDir, &resnet_inputs, app_inputFile, mp->batch);
-   		resnet_inputTensor.push_back(GenerateInputTensor(SNPE_resnet, resnet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+   		resnet_inputTensor.push_back(GenerateInputTensor(SNPE_resnet, resnet_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// MobileNet
@@ -808,7 +806,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_mobilenet);
  		PrefetchInputFile(app_OutputDir, &mobilenet_inputs, app_inputFile, mp->batch);
-  		mobilenet_inputTensor.push_back(GenerateInputTensor(SNPE_mobilenet, mobilenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+  		mobilenet_inputTensor.push_back(GenerateInputTensor(SNPE_mobilenet, mobilenet_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// SqueezeNet
@@ -819,7 +817,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_squeezenet);
 		PrefetchInputFile(app_OutputDir, &squeezenet_inputs, app_inputFile, mp->batch);
-   		squeezenet_inputTensor.push_back(GenerateInputTensor(SNPE_squeezenet, squeezenet_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+   		squeezenet_inputTensor.push_back(GenerateInputTensor(SNPE_squeezenet, squeezenet_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// YoloV2tiny
@@ -830,7 +828,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_yolov2);
 		PrefetchInputFile(app_OutputDir, &yolov2_inputs, app_inputFile, mp->batch);
-   		yolov2_inputTensor.push_back(GenerateInputTensor(SNPE_yolov2, yolov2_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+   		yolov2_inputTensor.push_back(GenerateInputTensor(SNPE_yolov2, yolov2_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	// faster_rcnn
@@ -841,7 +839,7 @@ void BuildSnpeModelAll() {
 
     		BuildModelAll(app_OutputDir, app_layerPath, mp->device, mp->batch, mp->num_layers, SNPE_frcnn);
 		PrefetchInputFile(app_OutputDir, &frcnn_inputs, app_inputFile, mp->batch);
-   		frcnn_inputTensor.push_back(GenerateInputTensor(SNPE_frcnn, frcnn_inputs, model_num++, mp->snpe_index)); // i is for inputs, index is for SNPE array 
+   		frcnn_inputTensor.push_back(GenerateInputTensor(SNPE_frcnn, frcnn_inputs, model_num++, mp->SNPE_start_index)); // i is for inputs, index is for SNPE array 
 	}
 
 	}
@@ -872,7 +870,7 @@ void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 
 		new_task->layer_num = i;		
 		new_task->batch_size = task->batch_size;
-//		new_task->SNPE_index = selected->SNPE_index[i];
+		new_task->SNPE_index = selected->SNPE_start_index + i;
 		new_task->dev = selected->device[i];
 		new_task->task_idx = Task_index;		
 		new_task->deadline = selected->deadline;
@@ -1188,6 +1186,7 @@ int main(int argc, char** argv)
 	// get App list from request input file name 
 	app_list = GetAppList(req_inputfiles[i]);
 	SettingModelParameters(algo_cmd, app_list, deadline_n);
+	break;
 	BuildSnpeModelAll();
 	cout << "BUILD finished" << endl;
 	// Build Section end
