@@ -1128,9 +1128,12 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
 void Task_scheduler_my(int Total_task) {
 
+
+    int weight = 10;
+
     int BIG_check = 0;
     int GPU_check = 0;
-    int DSP_check = 0;
+    int DSP_check = 0; 
 
     if(BIG_queue.size() > 0) BIG_check = 1;
     if(GPU_queue.size() > 0) GPU_check = 1;
@@ -1140,13 +1143,71 @@ void Task_scheduler_my(int Total_task) {
     	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
 
 		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
-
+			int s_idx = -1; // selected idx
+			int min_runtime = 999999;
+			for(int i = 0; i < BIG_queue.size(); i++) {
+				if(min_runtime > BIG_queue[i].runtime){ 
+					min_runtime = BIG_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < BIG_queue.size(); i++)
+				BIG_queue[i].runtime /= weight;	
+		
+			if(s_idx == -1) // first element of the queue
+				s_idx = 0;
+	
+			Task* task = &BIG_queue[s_idx];	
+		
+			if(task->layer_num == 0)  {
+				BIG_queue.erase(BIG_queue.begin() + s_idx);
+			}
 		}
 		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
+			int s_idx = -1; // selected idx
 
+			int min_runtime = 999999;
+			for(int i = 0; i < GPU_queue.size(); i++) {
+				if(min_runtime > GPU_queue[i].runtime){ 
+					min_runtime = GPU_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < GPU_queue.size(); i++) 
+				GPU_queue[i].runtime /= weight;	
+	
+			if(s_idx == -1) // first elemnet of the queue
+				s_idx = 0;
+
+			Task* task = &GPU_queue[s_idx];	
+	
+			if(task->layer_num == 0)  {
+				GPU_RUN = 1;
+				GPU_queue.erase(GPU_queue.begin() + s_idx);
+			}
 		}
 		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
+			int s_idx = -1; // selected idx
 
+			int min_runtime = 999999;
+			for(int i = 0; i < DSP_queue.size(); i++) {
+				if(min_runtime > DSP_queue[i].runtime){ 
+					min_runtime = DSP_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < DSP_queue.size(); i++) 
+				DSP_queue[i].runtime /= weight;	
+		
+			if(s_idx == -1) // first element of the queue
+				s_idx = 0;
+
+			Task* task = &DSP_queue[s_idx];	
+	
+			if(task->layer_num == 0)  {
+				DSP_RUN = 1;
+				DSP_queue.erase(DSP_queue.begin() + s_idx);
+			}
 		}
     	} 
 /*
