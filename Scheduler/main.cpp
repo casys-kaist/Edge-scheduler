@@ -167,6 +167,12 @@ float frcnn_big = 105.4;
 float frcnn_gpu = 20.2;
 float frcnn_dsp = 20.5;
 
+// configurable values
+float SLO_alpha = 1.5;
+int Task_index = 0;
+#define EMERGENCY_ON 1
+#define EMERGENCY_OFF 0
+
 class Model_Parameter {
 public:
 	char id;	
@@ -394,6 +400,14 @@ vector<vector<int> > Cartesian( vector<vector<int> >& v ) {
   }
   return all;
 }
+
+int DeadlineCheck(int task_deadline, int vRuntime){
+	if(task_deadline >= vRuntime * SLO_alpha) 
+		return 1;
+	//return task_deadline - vRuntime * SLO_alpha; 
+	return -(100.0 * vRuntime * SLO_alpha / task_deadline);
+}
+
 
 
 void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
@@ -865,12 +879,10 @@ void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 		else 
 			new_task->emergency = 0;
 		new_task->total_layer_num = selected->num_layers;
-
-//		new_task->real_arrival_time = task->real_arrival_time; // necessary? 
 	
 		new_task->exp_latency = selected->exp_latency;
 		new_task->exp_runtime = selected->exp_runtime;
-//		new_task->is_vio = est_deadline_check(selected->deadline, selected->exp_latency);
+		new_task->is_vio = DeadlineCheck(selected->deadline, selected->exp_latency);
 
 		new_task->batch_enqueue_time = task->batch_enqueue_time;
 		new_task->after_task_scheduler_time = 0;
