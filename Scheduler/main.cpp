@@ -1106,7 +1106,7 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 				Batch_queue.clear();
 			}
 		}
-		cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
+		//cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
 
         	gettimeofday(&tp, NULL);  // Added
 		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
@@ -1125,111 +1125,6 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
         }
 
 }
-
-void Task_scheduler_my(int Total_task) {
-
-
-    int weight = 10;
-
-    int BIG_check = 0;
-    int GPU_check = 0;
-    int DSP_check = 0; 
-
-    if(BIG_queue.size() > 0) BIG_check = 1;
-    if(GPU_queue.size() > 0) GPU_check = 1;
-    if(DSP_queue.size() > 0) DSP_check = 1;
-
-    while(1) { 
-    	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
-
-		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
-			int s_idx = -1; // selected idx
-			int min_runtime = 999999;
-			for(int i = 0; i < BIG_queue.size(); i++) {
-				if(min_runtime > BIG_queue[i].runtime){ 
-					min_runtime = BIG_queue[i].runtime;	
-					s_idx = i;
-				}
-			}
-			for(int i = 0; i < BIG_queue.size(); i++)
-				BIG_queue[i].runtime /= weight;	
-		
-			if(s_idx == -1) // first element of the queue
-				s_idx = 0;
-	
-			Task* task = &BIG_queue[s_idx];	
-		
-			if(task->layer_num == 0)  {
-				BIG_queue.erase(BIG_queue.begin() + s_idx);
-			}
-		}
-		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
-			int s_idx = -1; // selected idx
-
-			int min_runtime = 999999;
-			for(int i = 0; i < GPU_queue.size(); i++) {
-				if(min_runtime > GPU_queue[i].runtime){ 
-					min_runtime = GPU_queue[i].runtime;	
-					s_idx = i;
-				}
-			}
-			for(int i = 0; i < GPU_queue.size(); i++) 
-				GPU_queue[i].runtime /= weight;	
-	
-			if(s_idx == -1) // first elemnet of the queue
-				s_idx = 0;
-
-			Task* task = &GPU_queue[s_idx];	
-	
-			if(task->layer_num == 0)  {
-				GPU_RUN = 1;
-				GPU_queue.erase(GPU_queue.begin() + s_idx);
-			}
-		}
-		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
-			int s_idx = -1; // selected idx
-
-			int min_runtime = 999999;
-			for(int i = 0; i < DSP_queue.size(); i++) {
-				if(min_runtime > DSP_queue[i].runtime){ 
-					min_runtime = DSP_queue[i].runtime;	
-					s_idx = i;
-				}
-			}
-			for(int i = 0; i < DSP_queue.size(); i++) 
-				DSP_queue[i].runtime /= weight;	
-		
-			if(s_idx == -1) // first element of the queue
-				s_idx = 0;
-
-			Task* task = &DSP_queue[s_idx];	
-	
-			if(task->layer_num == 0)  {
-				DSP_RUN = 1;
-				DSP_queue.erase(DSP_queue.begin() + s_idx);
-			}
-		}
-    	} 
-/*
-	if(sch_end_time - sch_start_time > 10) {
-		cout << "TIME OUT" << endl;	
-    		Write_file << "TIME_OUT" << endl;
-		sleep(1);
-		break;
-	}
-*/
-   	cout << "Finished: " << Finished_BIG << " " <<  Finished_GPU << " " <<  Finished_DSP  << " = " << Finished_BIG + Finished_GPU + Finished_DSP  << " / " << Total_task << endl ;
-
- 	if(Finished_BIG + Finished_GPU + Finished_DSP >= Total_task) { 
-		sleep(1);
-		break;
-	}
-		
-    } // while loop
-
-}
-
-
 
 // Layer Execution (start from input tensor)
 zdl::DlSystem::TensorMap LayerExecution(std::vector<std::unique_ptr<zdl::SNPE::SNPE>>& model_ptr,std::unique_ptr<zdl::DlSystem::ITensor>& input_ptr, int index, char app_id, char dev) {
@@ -1279,7 +1174,6 @@ void RunTask(Task* task){
     gettimeofday(&tp, NULL);  // Added
     long int before = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 	
-/*
     if(task->id == 'a') {
     	midTensorMap_alexnet = LayerExecution(SNPE_alexnet, alexnet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
     }
@@ -1308,7 +1202,6 @@ void RunTask(Task* task){
     	midTensorMap_squeezenet = LayerExecution(SNPE_squeezenet, squeezenet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
     }
     else if(task->id == 'y'){
-    	//midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
 	if(task->dev == 'G')
         	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[0], task->SNPE_index, task->id, task->dev);
 	else if(task->dev == 'D')
@@ -1317,16 +1210,12 @@ void RunTask(Task* task){
     else if(task->id == 'f'){
     	midTensorMap_frcnn = LayerExecution(SNPE_frcnn, frcnn_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
     }
-*/
 
     gettimeofday(&tp, NULL);  // Added
     task->after_task_scheduler_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 
     int real_latency = task->after_task_scheduler_time - task->batch_enqueue_time;
     int real_runtime = task->after_task_scheduler_time - before;
-
-    std::cout << task->id << task->task_idx << " Latency: " << real_latency << " ms ";
-	cout << task->dev << " " << task->arrival_time <<  std::endl; //Added 
 
 /*
     int parent_idx = task->task_idx;
@@ -1337,33 +1226,191 @@ void RunTask(Task* task){
 	}
     }
 */
-	sleep(1);
-   
+    std::cout << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+	
     if(task->dev == 'B'){
-	BIG_RUN = 0; 
 	if(task->total_layer_num == 1) {
-    		//Write_file_BIG << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
-    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
+    		Write_file_BIG << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
 		Finished_BIG++;
 	}
+	BIG_RUN = 0; 
     }
 		
     else if(task->dev == 'G'){
-	GPU_RUN = 0;
 	if(task->total_layer_num == 1) {
-    		//Write_file_GPU << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
-    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
+    		Write_file_GPU << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
 		Finished_GPU++;
 	}
+	GPU_RUN = 0;
     }
     else if(task->dev == 'D'){
-	DSP_RUN = 0;
 	if(task->total_layer_num == 1) {
-    		//Write_file_DSP << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
-    		cout << task->id << task->task_idx << " Latency: " << task->after_task_scheduler_time - task->batch_enqueue_time << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+    		Write_file_DSP << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
 		Finished_DSP++;
 	}
+	DSP_RUN = 0;
     }
+    return;
+}
+
+void Task_scheduler_my(int Total_task) {
+
+    int weight = 10;
+
+    thread qthreads[3]; // BIG, GPU, DSP
+    int BIG_check = 0;
+    int GPU_check = 0;
+    int DSP_check = 0; 
+    if(BIG_queue.size() > 0) BIG_check = 1;
+    if(GPU_queue.size() > 0) GPU_check = 1;
+    if(DSP_queue.size() > 0) DSP_check = 1;
+
+    while(1) { 
+    	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
+
+		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
+			int s_idx = -1; // selected idx
+			int min_runtime = 999999;
+			for(int i = 0; i < BIG_queue.size(); i++) {
+				if(min_runtime > BIG_queue[i].runtime){ 
+					min_runtime = BIG_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < BIG_queue.size(); i++)
+				BIG_queue[i].runtime /= weight;	
+		
+			if(s_idx == -1) // first element of the queue
+				s_idx = 0;
+	
+		Task* task = new Task(BIG_queue[s_idx].id, BIG_queue[s_idx].arrival_time);
+		task->id = BIG_queue[s_idx].id;
+		task->total_layer_num = BIG_queue[s_idx].total_layer_num;
+		task->layer_num = BIG_queue[s_idx].layer_num;
+		task->batch_size = BIG_queue[s_idx].batch_size;
+		task->SNPE_index = BIG_queue[s_idx].SNPE_index;
+		task->dev = BIG_queue[s_idx].dev;
+		task->task_idx = BIG_queue[s_idx].task_idx;
+		task->batch_enqueue_time = BIG_queue[s_idx].batch_enqueue_time;
+		task->deadline = BIG_queue[s_idx].deadline;
+
+		task->is_vio = BIG_queue[s_idx].is_vio;
+		task->exp_latency = BIG_queue[s_idx].exp_latency;
+		task->exp_runtime = BIG_queue[s_idx].exp_runtime;
+
+
+
+			if(task->layer_num == 0)  {
+				BIG_RUN = 1;
+				qthreads[0] = thread(RunTask, task);
+				qthreads[0].detach();
+				BIG_queue.erase(BIG_queue.begin() + s_idx);
+			}
+		}
+		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
+			int s_idx = -1; // selected idx
+
+			int min_runtime = 999999;
+			for(int i = 0; i < GPU_queue.size(); i++) {
+				if(min_runtime > GPU_queue[i].runtime){ 
+					min_runtime = GPU_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < GPU_queue.size(); i++) 
+				GPU_queue[i].runtime /= weight;	
+	
+			if(s_idx == -1) // first elemnet of the queue
+				s_idx = 0;
+
+		Task* task = new Task(GPU_queue[s_idx].id, GPU_queue[s_idx].arrival_time);
+		task->id = GPU_queue[s_idx].id;
+		task->total_layer_num = GPU_queue[s_idx].total_layer_num;
+		task->layer_num = GPU_queue[s_idx].layer_num;
+		task->batch_size = GPU_queue[s_idx].batch_size;
+		task->SNPE_index = GPU_queue[s_idx].SNPE_index;
+		task->dev = GPU_queue[s_idx].dev;
+		task->task_idx = GPU_queue[s_idx].task_idx;
+		task->batch_enqueue_time = GPU_queue[s_idx].batch_enqueue_time;
+		task->deadline = GPU_queue[s_idx].deadline;
+
+		task->is_vio = GPU_queue[s_idx].is_vio;
+		task->exp_latency = GPU_queue[s_idx].exp_latency;
+		task->exp_runtime = GPU_queue[s_idx].exp_runtime;
+
+
+
+			if(task->layer_num == 0)  {
+				GPU_RUN = 1;
+				qthreads[1] = thread(RunTask, task);
+				qthreads[1].detach();
+				GPU_queue.erase(GPU_queue.begin() + s_idx);
+			}
+		}
+		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
+			int s_idx = -1; // selected idx
+
+			int min_runtime = 999999;
+			for(int i = 0; i < DSP_queue.size(); i++) {
+				if(min_runtime > DSP_queue[i].runtime){ 
+					min_runtime = DSP_queue[i].runtime;	
+					s_idx = i;
+				}
+			}
+			for(int i = 0; i < DSP_queue.size(); i++) 
+				DSP_queue[i].runtime /= weight;	
+		
+			if(s_idx == -1) // first element of the queue
+				s_idx = 0;
+
+		Task* task = new Task(DSP_queue[s_idx].id, DSP_queue[s_idx].arrival_time);
+		task->id = DSP_queue[s_idx].id;
+		task->total_layer_num = DSP_queue[s_idx].total_layer_num;
+		task->layer_num = DSP_queue[s_idx].layer_num;
+		task->batch_size = DSP_queue[s_idx].batch_size;
+		task->SNPE_index = DSP_queue[s_idx].SNPE_index;
+		task->dev = DSP_queue[s_idx].dev;
+		task->task_idx = DSP_queue[s_idx].task_idx;
+		task->batch_enqueue_time = DSP_queue[s_idx].batch_enqueue_time;
+		task->deadline = DSP_queue[s_idx].deadline;
+
+		task->is_vio = DSP_queue[s_idx].is_vio;
+		task->exp_latency = DSP_queue[s_idx].exp_latency;
+		task->exp_runtime = DSP_queue[s_idx].exp_runtime;
+
+
+			if(task->layer_num == 0)  {
+				DSP_RUN = 1;
+				qthreads[2] = thread(RunTask, task);
+				qthreads[2].detach();
+				DSP_queue.erase(DSP_queue.begin() + s_idx);
+			}
+		}
+    	} 
+/*
+	if(sch_end_time - sch_start_time > 10) {
+		cout << "TIME OUT" << endl;	
+    		Write_file << "TIME_OUT" << endl;
+		sleep(1);
+		break;
+	}
+*/
+   	//cout << "Finished: " << Finished_BIG << " " <<  Finished_GPU << " " <<  Finished_DSP  << " = " << Finished_BIG + Finished_GPU + Finished_DSP  << " / " << Total_task << endl ;
+
+ 	if(Finished_BIG + Finished_GPU + Finished_DSP >= Total_task) { 
+		sleep(1);
+		break;
+	}
+		
+    } // while loop
+
+    if (qthreads[0].joinable()) qthreads[0].join();
+    if (qthreads[1].joinable()) qthreads[1].join();
+    if (qthreads[2].joinable()) qthreads[2].join();
+    
+//    if(BIG_check == 1) BIG_queue_thread.join();
+//   if(GPU_check == 1) GPU_queue_thread.join();
+//    if(DSP_check == 1) DSP_queue_thread.join();
 }
 
 
