@@ -367,6 +367,12 @@ int Finished_BIG = 0;
 int Finished_GPU = 0; 
 int Finished_DSP = 0; 
 
+int vgg_slice_exist = 0;
+int num_VGG_SLICE_gpu = 0;
+int num_VGG_SLICE_dsp = 0;
+int num_YOLO_SLICE_gpu = 0;
+int num_YOLO_SLICE_dsp = 0;
+
 #define EMERGENCY_ON 1
 #define EMERGENCY_OFF 0
 float SLO_alpha = 1.5;
@@ -392,6 +398,12 @@ void InitGlobalState() {
 	Finished_BIG = 0; 
 	Finished_GPU = 0; 
 	Finished_DSP = 0; 
+
+	vgg_slice_exist = 0;
+	num_VGG_SLICE_gpu = 0;
+	num_VGG_SLICE_dsp = 0;
+	num_YOLO_SLICE_gpu = 0;
+	num_YOLO_SLICE_dsp = 0;
 }
 
 void ReadDirectory(const std::string& name, vector<string>& v)
@@ -473,6 +485,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 			}
 		}
 		else if(app_list[i] == 'v') { // vgg
+			vgg_slice_exist = 1;
     			deadline = 100 * deadlineN;	
 			if(algo_cmd.compare("slo_div") != 0) {
 				model_par = new Model_Parameter('v', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -1138,57 +1151,54 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 		int idx = all_combi[min_idx][i];
 		Model_Parameter* selected = &candidate_set[i][idx];			
 
-/*
 		// sliced task
-		if(selected->id == 'v' && selected->devs[0] == 'G' && num_VGG_SLICE_gpu < 1) {
+		if(selected->id == 'v' && selected->device[0] == 'G' && num_VGG_SLICE_gpu < 1) {
 				(*vGPU_runtime) += 88; // only first layer of VGG
 				num_VGG_SLICE_gpu += 1;	
-				for(int j = 0; j < Enrollment_Models.size(); j++) {
-					if(Enrollment_Models[j].id == 'v' && Enrollment_Models[j].layer_cnt == 4 && Enrollment_Models[j].devs[0] == 'G'){ 
-						selected = &Enrollment_Models[j];		
+
+				for(int j = 0; j < Model_Par_List.size(); j++) {
+					if(Model_Par_List[j].id == 'v' && Model_Par_List[j].num_layers == 4 && Model_Par_List[j].device[0] == 'G') {
+						selected = &Model_Par_List[j]; 
 					}
-				}
-				create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				}	
+				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
-		else if(selected->id == 'v' && selected->devs[0] == 'D' && num_VGG_SLICE_dsp < 1) {
+		else if(selected->id == 'v' && selected->device[0] == 'D' && num_VGG_SLICE_dsp < 1) {
 				(*vDSP_runtime) += 32; // only first layer of VGG
 				num_VGG_SLICE_dsp += 1;	
-				for(int j = 0; j < Enrollment_Models.size(); j++) {
-					if(Enrollment_Models[j].id == 'v' && Enrollment_Models[j].layer_cnt == 4 && Enrollment_Models[j].devs[0] == 'D'){ 
-						selected = &Enrollment_Models[j];		
+
+				for(int j = 0; j < Model_Par_List.size(); j++) {
+					if(Model_Par_List[j].id == 'v' && Model_Par_List[j].num_layers == 4 && Model_Par_List[j].device[0] == 'D') {
+						selected = &Model_Par_List[j]; 
 					}
-				}
-				create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				}	
+				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
-		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->devs[0] == 'G' && num_YOLO_SLICE_gpu < 1){
+		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->device[0] == 'G' && num_YOLO_SLICE_gpu < 1){
 				(*vGPU_runtime) += 15;  // only first layer of YoloV2tiny
 				num_YOLO_SLICE_gpu += 1;
-				for(int j = 0; j < Enrollment_Models.size(); j++) {
-					if(Enrollment_Models[j].id == 'y' && Enrollment_Models[j].layer_cnt == 4 && Enrollment_Models[j].devs[0] == 'G'){ 
-						selected = &Enrollment_Models[j];		
+
+				for(int j = 0; j < Model_Par_List.size(); j++) {
+					if(Model_Par_List[j].id == 'y' && Model_Par_List[j].num_layers == 4 && Model_Par_List[j].device[0] == 'G') {
+						selected = &Model_Par_List[j]; 
 					}
-				}
-				create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				}	
+				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
-		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->devs[0] == 'D' && num_YOLO_SLICE_dsp < 1){
+		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->device[0] == 'D' && num_YOLO_SLICE_dsp < 1){
 				(*vDSP_runtime) += 15;  // only first layer of YoloV2tiny
 				num_YOLO_SLICE_dsp += 1;
-				for(int j = 0; j < Enrollment_Models.size(); j++) {
-					if(Enrollment_Models[j].id == 'y' && Enrollment_Models[j].layer_cnt == 4 && Enrollment_Models[j].devs[0] == 'D'){ 
-						selected = &Enrollment_Models[j];		
+
+				for(int j = 0; j < Model_Par_List.size(); j++) {
+					if(Model_Par_List[j].id == 'y' && Model_Par_List[j].num_layers == 4 && Model_Par_List[j].device[0] == 'D') {
+						selected = &Model_Par_List[j]; 
 					}
-				}
-				create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				}	
+
+				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
-*/
-		if(true) { } 
-
-
-
-
-
 
 
 		else { // Non-sliced task
