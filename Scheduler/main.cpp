@@ -1419,6 +1419,10 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 				SLO_MAEL(Batch_queue, &vBIG_runtime, &vGPU_runtime, &vDSP_runtime);
 				Batch_queue.clear();
 			}
+			else if(algo_cmd.compare("slo_div") == 0) {
+				PSLO_MAEL(Batch_queue, &vBIG_runtime, &vGPU_runtime, &vDSP_runtime);
+				Batch_queue.clear();
+			}
 		}
 		//cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
 
