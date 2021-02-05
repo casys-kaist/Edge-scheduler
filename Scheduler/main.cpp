@@ -336,6 +336,14 @@ public:
 	}
 };
 
+typedef struct Combi_R {
+	int idx;		
+	int sum_latency;
+	int SLO_satisfied;	
+	int SLO_vio_runtime;	
+	int sum_energy;	
+	int gpu_idx;
+} Combi_R;
 
 
 // Global constant variable
@@ -871,6 +879,16 @@ bool ARRIVAL_CMP(const Task &p1, const Task &p2){
     }
 }
 
+bool SLO_CMP(const Combi_R &a, const Combi_R &b){
+	if(a.SLO_vio_runtime > b.SLO_vio_runtime)
+		return true;
+	else if(a.SLO_vio_runtime == b.SLO_vio_runtime)
+		return a.sum_latency < b.sum_latency;		
+	else
+		return false;
+}
+
+
 void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 
 /*
@@ -1075,7 +1093,6 @@ void SLO_MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 	}
 	all_combi = Cartesian(all_cand_idx);	
 
-
 	vector<Combi_R> All_combi;
 
 	for(int i = 0; i < all_combi.size(); i++) {
@@ -1136,7 +1153,7 @@ void SLO_MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 	}
 	
 	//sort(All_combi.begin(), All_combi.end(), SLO_sch_cmp3);
-	sort(All_combi.begin(), All_combi.end(), SLO_sch_cmp2);
+	sort(All_combi.begin(), All_combi.end(), SLO_CMP);
 	
 /*
 	cout << "<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
