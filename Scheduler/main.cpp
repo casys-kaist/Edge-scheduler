@@ -118,6 +118,8 @@ vector<std::unique_ptr<zdl::DlSystem::ITensor>> frcnn_inputTensor;
 
 zdl::DlSystem::TensorMap midTensorMap_alexnet;
 zdl::DlSystem::TensorMap midTensorMap_vgg;
+zdl::DlSystem::TensorMap midTensorMap_vgg2;
+zdl::DlSystem::TensorMap midTensorMap_vgg3;
 zdl::DlSystem::TensorMap midTensorMap_pos;
 zdl::DlSystem::TensorMap midTensorMap_mnist;
 zdl::DlSystem::TensorMap midTensorMap_googlenet;
@@ -125,6 +127,8 @@ zdl::DlSystem::TensorMap midTensorMap_resnet;
 zdl::DlSystem::TensorMap midTensorMap_mobilenet;
 zdl::DlSystem::TensorMap midTensorMap_squeezenet;
 zdl::DlSystem::TensorMap midTensorMap_yolov2;
+zdl::DlSystem::TensorMap midTensorMap_yolov22;
+zdl::DlSystem::TensorMap midTensorMap_yolov23;
 zdl::DlSystem::TensorMap midTensorMap_frcnn;
 
 std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE_alexnet;
@@ -1488,10 +1492,19 @@ void RunTask(Task* task){
     	midTensorMap_alexnet = LayerExecution(SNPE_alexnet, alexnet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
     }
     else if(task->id == 'v'){
-	if(task->dev == 'G')
-        	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[0], task->SNPE_index, task->id, task->dev);
-	else if(task->dev == 'D')
-        	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[1], task->SNPE_index, task->id, task->dev);
+	
+    	if(task->layer_num == 0) {
+		if(task->dev == 'G')
+       		 	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[0], task->SNPE_index, task->id, task->dev);
+		else if(task->dev == 'D')
+       		 	midTensorMap_vgg = LayerExecution(SNPE_vgg, vgg_inputTensor[1], task->SNPE_index, task->id, task->dev);
+	}
+    	else if(task->layer_num == 1) 
+ 	   	midTensorMap_vgg2 = LayerExecution(SNPE_vgg, midTensorMap_vgg, task->SNPE_index, task->id, task->dev);
+    	else if(task->layer_num == 2) 
+    		midTensorMap_vgg3 = LayerExecution(SNPE_vgg, midTensorMap_vgg2, task->SNPE_index, task->id, task->dev);
+    	else if(task->layer_num == 3) 
+    		LayerExecution(SNPE_vgg, midTensorMap_vgg3, task->SNPE_index, task->id, task->dev);
     }
     else if(task->id == 'p'){
     	midTensorMap_pos = LayerExecution(SNPE_pos, pos_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
@@ -1512,10 +1525,20 @@ void RunTask(Task* task){
     	midTensorMap_squeezenet = LayerExecution(SNPE_squeezenet, squeezenet_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
     }
     else if(task->id == 'y'){
-	if(task->dev == 'G')
-        	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[0], task->SNPE_index, task->id, task->dev);
-	else if(task->dev == 'D')
-        	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[1], task->SNPE_index, task->id, task->dev);
+
+    	if(task->layer_num == 0) {
+		if(task->dev == 'G')
+       		 	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[0], task->SNPE_index, task->id, task->dev);
+		else if(task->dev == 'D')
+       		 	midTensorMap_yolov2 = LayerExecution(SNPE_yolov2, yolov2_inputTensor[1], task->SNPE_index, task->id, task->dev);
+	}
+
+    	else if(task->layer_num == 1) 
+    		midTensorMap_yolov22 = LayerExecution(SNPE_yolov2, midTensorMap_yolov2, task->SNPE_index, task->id, task->dev);
+    	else if(task->layer_num == 2) 
+    		midTensorMap_yolov23 = LayerExecution(SNPE_yolov2, midTensorMap_yolov22, task->SNPE_index, task->id, task->dev);
+    	else if(task->layer_num == 3) 
+    		LayerExecution(SNPE_yolov2, midTensorMap_yolov23, task->SNPE_index, task->id, task->dev);
     }
     else if(task->id == 'f'){
     	midTensorMap_frcnn = LayerExecution(SNPE_frcnn, frcnn_inputTensor[task->SNPE_index], task->SNPE_index, task->id, task->dev);
@@ -1527,36 +1550,65 @@ void RunTask(Task* task){
     int real_latency = task->after_task_scheduler_time - task->batch_enqueue_time;
     int real_runtime = task->after_task_scheduler_time - before;
 
-/*
-    int parent_idx = task->task_idx;
-    for(int i = 0; i < Parent_queue.size(); i++) {
+    if(task->layer_num == 0) {
+	int parent_idx = task->task_idx;
+   	for(int i = 0; i < Parent_queue.size(); i++) {
  	if(parent_idx == Parent_queue[i]) {
-		Parent_queue.erase(Parent_queue.begin() + i);
-		break;
+			Parent_queue.erase(Parent_queue.begin() + i);
+			break;
+		}
+    	}
+    }
+    else if(task->layer_num == 1) {
+	int pparent_idx = task->task_idx;
+    	for(int i = 0; i < PParent_queue.size(); i++) {
+ 		if(pparent_idx == PParent_queue[i]) {
+			PParent_queue.erase(PParent_queue.begin() + i);
+			break;
+		}
 	}
     }
-*/
+    else if(task->layer_num == 2) {
+    	int ppparent_idx = task->task_idx;
+    	for(int i = 0; i < PPParent_queue.size(); i++) {
+ 		if(ppparent_idx == PPParent_queue[i]) {
+			PPParent_queue.erase(PPParent_queue.begin() + i);
+			break;
+		}
+    	}
+    }
+
+
     std::cout << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
 	
     if(task->dev == 'B'){
-	if(task->total_layer_num == 1) {
-    		Write_file_BIG << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
+    	Write_file_BIG << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
+
+	if(task->total_layer_num == task->layer_num + 1) {
 		Finished_BIG++;
 	}
 	BIG_RUN = 0; 
     }
 		
     else if(task->dev == 'G'){
-	if(task->total_layer_num == 1) {
-    		Write_file_GPU << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
+    	Write_file_GPU << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl; 
+	if(task->total_layer_num == task->layer_num + 1) {
 		Finished_GPU++;
+		if(task->total_layer_num == 4) {
+			if(task->id == 'y') num_YOLO_SLICE_gpu -= 1;
+			else if(task->id == 'v') num_VGG_SLICE_gpu -= 1;
+		}
 	}
 	GPU_RUN = 0;
     }
     else if(task->dev == 'D'){
-	if(task->total_layer_num == 1) {
-    		Write_file_DSP << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+    	Write_file_DSP << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+	if(task->total_layer_num == task->layer_num + 1) {
 		Finished_DSP++;
+		if(task->total_layer_num == 4) {
+			if(task->id == 'y') num_YOLO_SLICE_dsp -= 1;
+			else if(task->id == 'v') num_VGG_SLICE_dsp -= 1;
+		}
 	}
 	DSP_RUN = 0;
     }
