@@ -1557,8 +1557,6 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 
     struct timeval tp; 
     long int cur_time;
-    long int wait_time;
-
 
     while(1) { 
     	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
@@ -1701,6 +1699,9 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 
  	if(Finished_BIG + Finished_GPU + Finished_DSP >= Total_task) { 
 		sleep(1);
+      	 	gettimeofday(&tp, NULL);  // Added
+		long int end_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+    		Write_file << "END_TIME: " << end_time  << endl;
 		break;
 	}
 		
