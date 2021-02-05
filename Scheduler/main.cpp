@@ -967,11 +967,6 @@ void GenerateRequestQueue(vector<Task>& Request_queue, string filepath){
 	}
         sort(Request_queue.begin(), Request_queue.end(), ARRIVAL_CMP);
 
-/*
-	for(int i = 0; i < Request_queue.size(); i++){
-		cout << Request_queue[i].id <<  " " << Request_queue[i].arrival_time << endl;
-	}
-*/
 }
 
 void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int* vDSP_runtime) {
@@ -1001,8 +996,6 @@ void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int*
 		all_cand_idx.push_back(cand_idx);	
 	}
 	all_combi = Cartesian(all_cand_idx);	
-
-	//cout << "ALL combi: " << all_combi.size() << endl;
 
 	// Find MAEL (Min-Average-Estimated-Latency)
 	vector<int> sum_latency_set;
@@ -1556,11 +1549,16 @@ void RunTask(Task* task){
     return;
 }
 
-void Task_scheduler_my(int Total_task) {
+void Task_scheduler_my(int Total_task, string algo_cmd) {
 
     int weight = 10;
 
     thread qthreads[3]; // BIG, GPU, DSP
+
+    struct timeval tp; 
+    long int cur_time;
+    long int wait_time;
+
 
     while(1) { 
     	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
@@ -1568,10 +1566,13 @@ void Task_scheduler_my(int Total_task) {
 		if(BIG_queue.size() != 0 && BIG_RUN == 0) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
-			for(int i = 0; i < BIG_queue.size(); i++) {
-				if(min_runtime > BIG_queue[i].runtime){ 
-					min_runtime = BIG_queue[i].runtime;	
-					s_idx = i;
+
+			if(s_idx == -1) {
+				for(int i = 0; i < BIG_queue.size(); i++) {
+					if(min_runtime > BIG_queue[i].runtime){ 
+						min_runtime = BIG_queue[i].runtime;	
+						s_idx = i;
+					}
 				}
 			}
 			for(int i = 0; i < BIG_queue.size(); i++)
@@ -1606,12 +1607,14 @@ void Task_scheduler_my(int Total_task) {
 		}
 		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
 			int s_idx = -1; // selected idx
-
 			int min_runtime = 999999;
-			for(int i = 0; i < GPU_queue.size(); i++) {
-				if(min_runtime > GPU_queue[i].runtime){ 
-					min_runtime = GPU_queue[i].runtime;	
-					s_idx = i;
+		
+			if(s_idx == -1) {
+				for(int i = 0; i < GPU_queue.size(); i++) {
+					if(min_runtime > GPU_queue[i].runtime){ 
+						min_runtime = GPU_queue[i].runtime;	
+						s_idx = i;
+					}
 				}
 			}
 			for(int i = 0; i < GPU_queue.size(); i++) 
@@ -1646,12 +1649,14 @@ void Task_scheduler_my(int Total_task) {
 		}
 		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
 			int s_idx = -1; // selected idx
-
 			int min_runtime = 999999;
-			for(int i = 0; i < DSP_queue.size(); i++) {
-				if(min_runtime > DSP_queue[i].runtime){ 
-					min_runtime = DSP_queue[i].runtime;	
-					s_idx = i;
+		
+			if(s_idx == -1) {
+				for(int i = 0; i < DSP_queue.size(); i++) {
+					if(min_runtime > DSP_queue[i].runtime){ 
+						min_runtime = DSP_queue[i].runtime;	
+						s_idx = i;
+					}
 				}
 			}
 			for(int i = 0; i < DSP_queue.size(); i++) 
@@ -1768,7 +1773,7 @@ int main(int argc, char** argv)
    		GenerateRequestQueue(Request_queue, in_filepath);
 		
 		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
-		thread SchedulerManagerThread(Task_scheduler_my, Request_queue.size());
+		thread SchedulerManagerThread(Task_scheduler_my, Request_queue.size(), algo_cmd);
 
 		RequestManagerThread.join();
 		SchedulerManagerThread.join();
