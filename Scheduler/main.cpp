@@ -1190,6 +1190,12 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 				create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 */
+		if(true) { } 
+
+
+
+
+
 
 
 		else { // Non-sliced task
@@ -1555,12 +1561,6 @@ void Task_scheduler_my(int Total_task) {
     int weight = 10;
 
     thread qthreads[3]; // BIG, GPU, DSP
-    int BIG_check = 0;
-    int GPU_check = 0;
-    int DSP_check = 0; 
-    if(BIG_queue.size() > 0) BIG_check = 1;
-    if(GPU_queue.size() > 0) GPU_check = 1;
-    if(DSP_queue.size() > 0) DSP_check = 1;
 
     while(1) { 
     	if(BIG_queue.size() + GPU_queue.size() + DSP_queue.size() > 0) {
@@ -1704,10 +1704,6 @@ void Task_scheduler_my(int Total_task) {
     if (qthreads[0].joinable()) qthreads[0].join();
     if (qthreads[1].joinable()) qthreads[1].join();
     if (qthreads[2].joinable()) qthreads[2].join();
-    
-//    if(BIG_check == 1) BIG_queue_thread.join();
-//   if(GPU_check == 1) GPU_queue_thread.join();
-//    if(DSP_check == 1) DSP_queue_thread.join();
 }
 
 
