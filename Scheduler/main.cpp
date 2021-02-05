@@ -1338,8 +1338,7 @@ void SLO_MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 			selected->exp_runtime = selected->GPU_runtime[0]; // runtime
 			(*vGPU_runtime) += selected->GPU_runtime[0];
 			selected->exp_latency = (*vGPU_runtime); // latency
-			if(DeadlineCheck(selected->deadline, (*vGPU_runtime)) == 1)
-				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
+			if(DeadlineCheck(selected->deadline, (*vGPU_runtime)) == 1) EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 			else 
 				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_ON);
 		}
@@ -1354,9 +1353,6 @@ void SLO_MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 		}
 	}
 }
-
-
-
 
 
 void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queue) {
@@ -1583,16 +1579,30 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
 
-			if(s_idx == -1) {
+			if(algo_cmd.compare("my") == 0) {
 				for(int i = 0; i < BIG_queue.size(); i++) {
 					if(min_runtime > BIG_queue[i].runtime){ 
 						min_runtime = BIG_queue[i].runtime;	
 						s_idx = i;
 					}
 				}
+				for(int i = 0; i < BIG_queue.size(); i++)
+					BIG_queue[i].runtime /= weight;	
 			}
-			for(int i = 0; i < BIG_queue.size(); i++)
-				BIG_queue[i].runtime /= weight;	
+			else if(algo_cmd.compare("slo") == 0) {
+      		 		gettimeofday(&tp, NULL);  // Added
+				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+				// init remaining time
+				for(int i = 0; i < BIG_queue.size(); i++) 
+					BIG_queue[i].wruntime = BIG_queue[i].deadline - (cur_time - BIG_queue[i].batch_enqueue_time + BIG_queue[i].runtime);
+
+				for(int i = 0; i < BIG_queue.size(); i++) {
+					if(min_runtime > BIG_queue[i].wruntime){ 
+						min_runtime = BIG_queue[i].wruntime;	
+						s_idx = i;
+					}
+				}
+			}
 		
 			if(s_idx == -1) // first element of the queue
 				s_idx = 0;
@@ -1624,17 +1634,31 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
-		
-			if(s_idx == -1) {
+
+			if(algo_cmd.compare("my") == 0) {
 				for(int i = 0; i < GPU_queue.size(); i++) {
 					if(min_runtime > GPU_queue[i].runtime){ 
 						min_runtime = GPU_queue[i].runtime;	
 						s_idx = i;
 					}
 				}
+				for(int i = 0; i < GPU_queue.size(); i++) 
+					GPU_queue[i].runtime /= weight;	
 			}
-			for(int i = 0; i < GPU_queue.size(); i++) 
-				GPU_queue[i].runtime /= weight;	
+			else if(algo_cmd.compare("slo") == 0) {
+      		 		gettimeofday(&tp, NULL);  // Added
+				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+				// init remaining time
+				for(int i = 0; i < GPU_queue.size(); i++) 
+					GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + GPU_queue[i].runtime);
+
+				for(int i = 0; i < GPU_queue.size(); i++) {
+					if(min_runtime > GPU_queue[i].wruntime){ 
+						min_runtime = GPU_queue[i].wruntime;	
+						s_idx = i;
+					}
+				}
+			}
 	
 			if(s_idx == -1) // first elemnet of the queue
 				s_idx = 0;
@@ -1667,16 +1691,30 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
 		
-			if(s_idx == -1) {
+			if(algo_cmd.compare("my") == 0) {
 				for(int i = 0; i < DSP_queue.size(); i++) {
 					if(min_runtime > DSP_queue[i].runtime){ 
 						min_runtime = DSP_queue[i].runtime;	
 						s_idx = i;
 					}
 				}
+				for(int i = 0; i < DSP_queue.size(); i++) 
+					DSP_queue[i].runtime /= weight;	
 			}
-			for(int i = 0; i < DSP_queue.size(); i++) 
-				DSP_queue[i].runtime /= weight;	
+			else if(algo_cmd.compare("slo") == 0) {
+      		 		gettimeofday(&tp, NULL);  // Added
+				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+				// init remaining time
+				for(int i = 0; i < DSP_queue.size(); i++) 
+					DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + DSP_queue[i].runtime);
+
+				for(int i = 0; i < DSP_queue.size(); i++) {
+					if(min_runtime > DSP_queue[i].wruntime){ 
+						min_runtime = DSP_queue[i].wruntime;	
+						s_idx = i;
+					}
+				}
+			}
 		
 			if(s_idx == -1) // first element of the queue
 				s_idx = 0;
