@@ -360,6 +360,11 @@ vector<Task> Batch_queue;
 vector<Task> BIG_queue;
 vector<Task> GPU_queue;
 vector<Task> DSP_queue;
+
+vector<int> Parent_queue; // parent who have child finish check (get task_idx)
+vector<int> PParent_queue; // parent who have child finish check (get task_idx)
+vector<int> PPParent_queue; // parent who have child finish check (get task_idx)
+
 int BIG_RUN = 0;
 int GPU_RUN = 0;
 int DSP_RUN = 0;
@@ -904,13 +909,12 @@ bool SLO_CMP(const Combi_R &a, const Combi_R &b){
 
 void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 
-/*
-	if(selected->layer_cnt >= 2) {
+	// for slice version
+	if(selected->num_layers > 1) {
 		Parent_queue.push_back(Task_index);
 		PParent_queue.push_back(Task_index);
 		PPParent_queue.push_back(Task_index);
 	}
-*/
 
 	// Generate and Enqueue Task
 	for(int i = 0; i < selected->num_layers; i++) {
@@ -1161,7 +1165,7 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
-				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 		else if(selected->id == 'v' && selected->device[0] == 'D' && num_VGG_SLICE_dsp < 1) {
 				(*vDSP_runtime) += 32; // only first layer of VGG
@@ -1172,7 +1176,7 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
-				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
 		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->device[0] == 'G' && num_YOLO_SLICE_gpu < 1){
@@ -1184,7 +1188,7 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
-				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
+				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
 		else if(vgg_slice_exist == 0 && selected->id == 'y' && selected->device[0] == 'D' && num_YOLO_SLICE_dsp < 1){
@@ -1196,8 +1200,8 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
+				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 
-				//create_from_model_slice(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
 
