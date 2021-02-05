@@ -1045,8 +1045,159 @@ void MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int*
 		}
 		EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 	}
-
 }
+
+void SLO_MAEL(vector<Task>& Batch_queue, int *vBIG_runtime, int * vGPU_runtime, int* vDSP_runtime) {
+	vector<vector<Model_Parameter> > candidate_set;
+
+	// Prepare all candidate set
+	for(int i = 0; i < Batch_queue.size(); i++) {
+		vector<Model_Parameter> candidate;
+		char app_id = Batch_queue[i].id;
+
+		for(int j = 0; j < Model_Par_List.size(); j++) {
+			if(Model_Par_List[j].id == app_id && Model_Par_List[j].num_layers == 1) 
+			{
+				candidate.push_back( Model_Par_List[j] ); 
+			}
+		}	
+		candidate_set.push_back( candidate );	
+	}
+	vector<vector<int> > all_cand_idx; 	
+	vector<vector<int> > all_combi; 	
+		
+	for(int i = 0; i < candidate_set.size(); i++) {
+		vector<int> cand_idx;	
+		vector<Model_Parameter> model_cand = candidate_set[i];	
+		for(int j = 0; j < model_cand.size(); j++) 
+			cand_idx.push_back(j);
+		all_cand_idx.push_back(cand_idx);	
+	}
+	all_combi = Cartesian(all_cand_idx);	
+
+
+	vector<Combi_R> All_combi;
+
+	for(int i = 0; i < all_combi.size(); i++) {
+		int idx;
+		float sum_latency = 0;
+		int slo_satisfied = 0;
+		int slo_vio_runtime = 0;
+
+		int vBIG_sum_tmp = *vBIG_runtime;
+		int vGPU_sum_tmp = *vGPU_runtime;
+		int vDSP_sum_tmp = *vDSP_runtime;
+
+		for(int j = 0; j < all_combi[i].size(); j++) {
+			vector<Model> model_cand = tasks[j];	
+			idx = all_combi[i][j]; 		
+			slo_vio_runtime = 0;
+
+			
+			// calculate if new task is run on each device
+			if(model_cand[idx].devs[0] == 'B') {
+				vBIG_sum_tmp += model_cand[idx].BIG_runtime[0];
+				sum_latency += vBIG_sum_tmp;	
+				int vio_runtime = est_deadline_check(model_cand[idx].deadline, vBIG_sum_tmp); 
+				//if(model_cand[idx].id == 'y') 
+				//	Write_file << "YoloV2 BIG vio_runtime: " << vio_runtime << endl;
+				slo_vio_runtime += vio_runtime;
+			}
+			else if(model_cand[idx].devs[0] == 'G') {
+				vGPU_sum_tmp += model_cand[idx].GPU_runtime[0];
+				sum_latency += vGPU_sum_tmp;	
+				int vio_runtime = est_deadline_check(model_cand[idx].deadline, vGPU_sum_tmp); 
+				//if(model_cand[idx].id == 'y') 
+				//	Write_file << "YoloV2 GPU vio_runtime: " << vio_runtime << endl;
+				slo_vio_runtime += vio_runtime;
+			}
+			else if(model_cand[idx].devs[0] == 'D') {
+				vDSP_sum_tmp += model_cand[idx].DSP_runtime[0];
+				sum_latency += vDSP_sum_tmp;	
+				int vio_runtime = est_deadline_check(model_cand[idx].deadline, vDSP_sum_tmp);
+				//if(model_cand[idx].id == 'y') 
+				//	Write_file << "YoloV2 DSP vio_runtime: " << vio_runtime << endl;
+				slo_vio_runtime += vio_runtime;
+			}
+			//cout << model_cand[idx].id << " " <<  model_cand[idx].devs[0] << endl;
+		}
+		//cout << endl;
+		Combi_R* new_combi = (Combi_R *)malloc(sizeof(Combi_R));
+		new_combi->idx = i;
+		new_combi->sum_latency = sum_latency;
+		new_combi->SLO_satisfied = slo_satisfied;
+		new_combi->SLO_vio_runtime = slo_vio_runtime;
+		All_combi.push_back(*new_combi);
+	
+		//cout << "index: " << i << endl;
+		//cout << "Sum Latency: " << sum_latency << endl;
+		//cout << "sio_vio_runtime " << slo_vio_runtime << endl;
+		//cout << "V_runtime: " << vBIG_sum_tmp << ", " << vGPU_sum_tmp << ", " << vDSP_sum_tmp << endl; 
+	}
+	
+	//sort(All_combi.begin(), All_combi.end(), SLO_sch_cmp3);
+	sort(All_combi.begin(), All_combi.end(), SLO_sch_cmp2);
+	
+/*
+	cout << "<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+	for(int i = 0; i < All_combi.size(); i++) { 
+		cout << "============================================" << endl;
+		cout << "idx: " << All_combi[i].idx << endl;		
+		cout << "sum_latency: " << All_combi[i].sum_latency << endl;		
+		cout << "SLO_vio_runtime: " << All_combi[i].SLO_vio_runtime << endl;	
+		cout << "SLO_satisfied: " << All_combi[i].SLO_satisfied << endl;	
+	}
+	cout << "<<<<<<<<<<<<<<<<<<< END >>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+*/
+	
+	int min_idx = All_combi[0].idx;
+	est_sum_vio_runtime += All_combi[0].SLO_vio_runtime;
+
+// ORIGIANL VERSION
+	// set of idxes
+	for(int i = 0; i < all_combi[min_idx].size(); i++)  {
+		int idx = all_combi[min_idx][i];
+		Model* selected; // selected from algorithm	
+		selected = &tasks[i][idx];			
+	
+		if(selected->devs[0] == 'B') {
+			selected->est_runtime = selected->BIG_runtime[0]; // runtime
+			(*vBIG_runtime) += selected->BIG_runtime[0];
+			selected->est_latency = (*vBIG_runtime); // latency
+			if(est_deadline_check(selected->deadline, (*vBIG_runtime)) == 1)
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_OFF);
+			else {
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_ON);
+			}
+		}
+		else if(selected->devs[0] == 'G') {
+			selected->est_runtime = selected->GPU_runtime[0]; // runtime
+			(*vGPU_runtime) += selected->GPU_runtime[0];
+			selected->est_latency = (*vGPU_runtime); // latency
+			if(est_deadline_check(selected->deadline, (*vGPU_runtime)) == 1)
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_OFF);
+			else {
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_ON);
+			}
+		}
+		else if(selected->devs[0] == 'D') {
+			selected->est_runtime = selected->DSP_runtime[0]; // runtime
+			(*vDSP_runtime) += selected->DSP_runtime[0];
+			selected->est_latency = (*vDSP_runtime); // latency
+
+			if(est_deadline_check(selected->deadline, (*vDSP_runtime)) == 1)
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_OFF);
+			else {
+				create_from_model(selected, &Batch_queue[i], EMERGENCY_ON);
+			}
+		}
+		//create_from_model_old(selected, &Batch_queue[i]);
+// ORIGINAL VERSION END
+	}
+}
+
+
+
 
 
 void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queue) {
