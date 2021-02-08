@@ -1192,6 +1192,7 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
+				cout << "YoloV2 slice GPU " << selected->num_layers << endl;
 				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
@@ -1204,6 +1205,7 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
+				cout << "YoloV2 slice DSP " << selected->num_layers << endl;
 				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 
 		}
@@ -1583,7 +1585,7 @@ void RunTask(Task* task){
     }
 
 
-    std::cout << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+    std::cout << task->layer_num << task->total_layer_num << " "  << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
 	
     if(task->dev == 'B'){
     	Write_file_BIG << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
@@ -1616,7 +1618,6 @@ void RunTask(Task* task){
 	}
 	DSP_RUN = 0;
     }
-    return;
 }
 
 // Create New task for layer execution
@@ -1684,14 +1685,10 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				s_idx = 0;
 	
 			Task* task = CreateNewTask(&BIG_queue[s_idx]);
-
-
-			if(task->layer_num == 0)  {
-				BIG_RUN = 1;
-				qthreads[0] = thread(RunTask, task);
-				qthreads[0].detach();
-				BIG_queue.erase(BIG_queue.begin() + s_idx);
-			}
+			BIG_RUN = 1;
+			qthreads[0] = thread(RunTask, task);
+			qthreads[0].detach();
+			BIG_queue.erase(BIG_queue.begin() + s_idx);
 		}
 		if(GPU_queue.size() != 0 && GPU_RUN == 0) {
 			int s_idx = -1; // selected idx
@@ -1825,14 +1822,10 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				s_idx = 0;
 
 			Task* task = CreateNewTask(&GPU_queue[s_idx]);
-
-
-			if(task->layer_num == 0)  {
-				GPU_RUN = 1;
-				qthreads[1] = thread(RunTask, task);
-				qthreads[1].detach();
-				GPU_queue.erase(GPU_queue.begin() + s_idx);
-			}
+			GPU_RUN = 1;
+			qthreads[1] = thread(RunTask, task);
+			qthreads[1].detach();
+			GPU_queue.erase(GPU_queue.begin() + s_idx);
 		}
 		if(DSP_queue.size() != 0 && DSP_RUN == 0) {
 			int s_idx = -1; // selected idx
@@ -1967,13 +1960,10 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 
 			Task* task = CreateNewTask(&DSP_queue[s_idx]);
 
-
-			if(task->layer_num == 0)  {
-				DSP_RUN = 1;
-				qthreads[2] = thread(RunTask, task);
-				qthreads[2].detach();
-				DSP_queue.erase(DSP_queue.begin() + s_idx);
-			}
+			DSP_RUN = 1;
+			qthreads[2] = thread(RunTask, task);
+			qthreads[2].detach();
+			DSP_queue.erase(DSP_queue.begin() + s_idx);
 		}
     	} 
 /*
