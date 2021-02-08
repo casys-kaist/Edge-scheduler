@@ -1619,6 +1619,26 @@ void RunTask(Task* task){
     return;
 }
 
+// Create New task for layer execution
+Task* CreateNewTask(Task* taskinqueue) {
+	Task* task = new Task(taskinqueue->id, taskinqueue->arrival_time);
+	task->total_layer_num = taskinqueue->total_layer_num;
+	task->layer_num = taskinqueue->layer_num;
+	task->batch_size = taskinqueue->batch_size;
+	task->SNPE_index = taskinqueue->SNPE_index;
+	task->dev = taskinqueue->dev;
+	task->task_idx = taskinqueue->task_idx;
+	task->batch_enqueue_time = taskinqueue->batch_enqueue_time;
+	task->deadline = taskinqueue->deadline;
+
+	task->is_vio = taskinqueue->is_vio;
+	task->exp_latency = taskinqueue->exp_latency;
+	task->exp_runtime = taskinqueue->exp_runtime;
+
+	return task;
+}
+
+
 void Task_scheduler_my(int Total_task, string algo_cmd) {
 
     int weight = 10;
@@ -1663,21 +1683,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			if(s_idx == -1) // first element of the queue
 				s_idx = 0;
 	
-		Task* task = new Task(BIG_queue[s_idx].id, BIG_queue[s_idx].arrival_time);
-		task->id = BIG_queue[s_idx].id;
-		task->total_layer_num = BIG_queue[s_idx].total_layer_num;
-		task->layer_num = BIG_queue[s_idx].layer_num;
-		task->batch_size = BIG_queue[s_idx].batch_size;
-		task->SNPE_index = BIG_queue[s_idx].SNPE_index;
-		task->dev = BIG_queue[s_idx].dev;
-		task->task_idx = BIG_queue[s_idx].task_idx;
-		task->batch_enqueue_time = BIG_queue[s_idx].batch_enqueue_time;
-		task->deadline = BIG_queue[s_idx].deadline;
-
-		task->is_vio = BIG_queue[s_idx].is_vio;
-		task->exp_latency = BIG_queue[s_idx].exp_latency;
-		task->exp_runtime = BIG_queue[s_idx].exp_runtime;
-
+			Task* task = CreateNewTask(&BIG_queue[s_idx]);
 
 
 			if(task->layer_num == 0)  {
@@ -1818,21 +1824,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			if(s_idx == -1) // first elemnet of the queue
 				s_idx = 0;
 
-		Task* task = new Task(GPU_queue[s_idx].id, GPU_queue[s_idx].arrival_time);
-		task->id = GPU_queue[s_idx].id;
-		task->total_layer_num = GPU_queue[s_idx].total_layer_num;
-		task->layer_num = GPU_queue[s_idx].layer_num;
-		task->batch_size = GPU_queue[s_idx].batch_size;
-		task->SNPE_index = GPU_queue[s_idx].SNPE_index;
-		task->dev = GPU_queue[s_idx].dev;
-		task->task_idx = GPU_queue[s_idx].task_idx;
-		task->batch_enqueue_time = GPU_queue[s_idx].batch_enqueue_time;
-		task->deadline = GPU_queue[s_idx].deadline;
-
-		task->is_vio = GPU_queue[s_idx].is_vio;
-		task->exp_latency = GPU_queue[s_idx].exp_latency;
-		task->exp_runtime = GPU_queue[s_idx].exp_runtime;
-
+			Task* task = CreateNewTask(&GPU_queue[s_idx]);
 
 
 			if(task->layer_num == 0)  {
@@ -1973,20 +1965,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			if(s_idx == -1) // first element of the queue
 				s_idx = 0;
 
-		Task* task = new Task(DSP_queue[s_idx].id, DSP_queue[s_idx].arrival_time);
-		task->id = DSP_queue[s_idx].id;
-		task->total_layer_num = DSP_queue[s_idx].total_layer_num;
-		task->layer_num = DSP_queue[s_idx].layer_num;
-		task->batch_size = DSP_queue[s_idx].batch_size;
-		task->SNPE_index = DSP_queue[s_idx].SNPE_index;
-		task->dev = DSP_queue[s_idx].dev;
-		task->task_idx = DSP_queue[s_idx].task_idx;
-		task->batch_enqueue_time = DSP_queue[s_idx].batch_enqueue_time;
-		task->deadline = DSP_queue[s_idx].deadline;
-
-		task->is_vio = DSP_queue[s_idx].is_vio;
-		task->exp_latency = DSP_queue[s_idx].exp_latency;
-		task->exp_runtime = DSP_queue[s_idx].exp_runtime;
+			Task* task = CreateNewTask(&DSP_queue[s_idx]);
 
 
 			if(task->layer_num == 0)  {
