@@ -1192,7 +1192,6 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
-				cout << "YoloV2 slice GPU " << selected->num_layers << endl;
 				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 		}
 
@@ -1205,7 +1204,6 @@ void PSLO_MAEL(vector<Task> Batch_queue, int *vBIG_runtime, int * vGPU_runtime, 
 						selected = &Model_Par_List[j]; 
 					}
 				}	
-				cout << "YoloV2 slice DSP " << selected->num_layers << endl;
 				EnqueueTask(selected, &Batch_queue[i], EMERGENCY_OFF);
 
 		}
@@ -1640,6 +1638,139 @@ Task* CreateNewTask(Task* taskinqueue) {
 }
 
 
+float CalculateRemainingTime(Task* task, long int cur_time) {
+	float remaining_time;
+	
+	if(task->total_layer_num == 1) 
+		remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + task->runtime);
+	else if(task->total_layer_num == 4) {
+		if(task->dev == 'G') {
+			if(task->id == 'v' && task->layer_num == 0)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 220);
+			else if(task->id == 'v' && task->layer_num == 1)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 130);
+			else if(task->id == 'v' && task->layer_num == 2)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 80);
+			else if(task->id == 'v' && task->layer_num == 3)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 30);
+	
+			else if(task->id == 'y' && task->layer_num == 0)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
+			else if(task->id == 'y' && task->layer_num == 1)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 45);
+			else if(task->id == 'y' && task->layer_num == 2)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 35);
+			else if(task->id == 'y' && task->layer_num == 3)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 15);
+
+		}
+		else if(task->dev == 'D') {
+			if(task->id == 'v' && task->layer_num == 0) 
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 85);
+			else if(task->id == 'v' && task->layer_num == 1) 
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
+			else if(task->id == 'v' && task->layer_num == 2) 
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 25);
+			else if(task->id == 'v' && task->layer_num == 3) 
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 0);
+
+			else if(task->id == 'y' && task->layer_num == 0)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
+			else if(task->id == 'y' && task->layer_num == 1)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 45);
+			else if(task->id == 'y' && task->layer_num == 2)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 35);
+			else if(task->id == 'y' && task->layer_num == 3)
+				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 15);
+
+
+		}
+	}
+
+	return remaining_time;
+}
+
+int PSLO_MAEL_Scheduler(vector<Task> DeviceQueue) {
+	vector<int> possible_index;	
+	int min_runtime = 999999;
+
+	int s_idx = -1;
+	struct timeval tp; 
+	long int cur_time;
+
+	gettimeofday(&tp, NULL);  // Added
+	cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
+
+	for(int i = 0; i < DeviceQueue.size(); i++) {
+		DeviceQueue[i].wruntime = CalculateRemainingTime(&DeviceQueue[i], cur_time);
+	}
+
+	for(int i = 0; i < DeviceQueue.size(); i++) {
+		if(DeviceQueue[i].layer_num == 0)  {
+			s_idx = i;
+			possible_index.push_back(s_idx);
+		}
+
+		else if(DeviceQueue[i].layer_num == 1) {
+			int pid = DeviceQueue[i].task_idx;
+			bool parent_finish = true;
+
+			for(int j = 0; j < Parent_queue.size(); j++) {
+				if(pid == Parent_queue[j]) {
+					parent_finish = false;
+					break;
+				}
+			}
+			if(parent_finish == true) {
+				s_idx = i;
+				possible_index.push_back(s_idx);
+			}
+		}
+
+		else if(DeviceQueue[i].layer_num == 2) {
+			int pid = DeviceQueue[i].task_idx;
+			bool parent_finish = true;
+
+			for(int j = 0; j < PParent_queue.size(); j++) {
+				if(pid == PParent_queue[j]) {
+					parent_finish = false;
+					break;
+				}
+			}
+			if(parent_finish == true) {
+				s_idx = i;
+				possible_index.push_back(s_idx);
+			}
+		}
+
+		else if(DeviceQueue[i].layer_num == 3) {
+			int pid = DeviceQueue[i].task_idx;
+			bool parent_finish = true;
+
+			for(int j = 0; j < PPParent_queue.size(); j++) {
+				if(pid == PPParent_queue[j]) {
+					parent_finish = false;
+					break;
+				}
+			}
+			if(parent_finish == true) {
+				s_idx = i;
+				possible_index.push_back(s_idx);
+			}
+		}	
+	}
+
+	for(int i = 0; i < possible_index.size(); i++) {
+		int index = possible_index[i]; 
+		if(min_runtime > DeviceQueue[index].wruntime){ 
+			min_runtime = DeviceQueue[index].wruntime;	
+			s_idx = index;
+		}
+	}
+	return s_idx;
+}
+
+
 void Task_scheduler_my(int Total_task, string algo_cmd) {
 
     int weight = 10;
@@ -1718,105 +1849,11 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 					}
 				}
 			}
+
 			else if(algo_cmd.compare("slo_div") == 0) {
-       		gettimeofday(&tp, NULL);  // Added
-		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
-
-		for(int i = 0; i < GPU_queue.size(); i++) {
-			if(GPU_queue[i].id == 'v' && GPU_queue[i].layer_num == 0)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 220);
-			else if(GPU_queue[i].id == 'v' && GPU_queue[i].layer_num == 1)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 130);
-			else if(GPU_queue[i].id == 'v' && GPU_queue[i].layer_num == 2)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 80);
-			else if(GPU_queue[i].id == 'v' && GPU_queue[i].layer_num == 3)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 30);
-
-			else if(GPU_queue[i].id == 'y' && GPU_queue[i].layer_num == 0)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 55);
-			else if(GPU_queue[i].id == 'y' && GPU_queue[i].layer_num == 1)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 45);
-			else if(GPU_queue[i].id == 'y' && GPU_queue[i].layer_num == 2)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 35);
-			else if(GPU_queue[i].id == 'y' && GPU_queue[i].layer_num == 3)
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + 15);
-			else
-				GPU_queue[i].wruntime = GPU_queue[i].deadline - (cur_time - GPU_queue[i].batch_enqueue_time + GPU_queue[i].runtime );
-		}
-
-
-		if(s_idx == -1) { 
-			vector<int> possible_index;	
-
-			for(int i = 0; i < GPU_queue.size(); i++) {
-				if(GPU_queue[i].layer_num == 0)  {
-					s_idx = i;
-					possible_index.push_back(s_idx);
-				}
-
-				else if(GPU_queue[i].layer_num == 1) {
-					int pid = GPU_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < Parent_queue.size(); j++) {
-						if(pid == Parent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-
-				else if(GPU_queue[i].layer_num == 2) {
-					int pid = GPU_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < PParent_queue.size(); j++) {
-						if(pid == PParent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-
-				else if(GPU_queue[i].layer_num == 3) {
-					int pid = GPU_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < PPParent_queue.size(); j++) {
-						if(pid == PPParent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-			}
-
-			int min_runtime = 999999;
-			for(int i = 0; i < possible_index.size(); i++) {
-				int index = possible_index[i]; 
-				if(min_runtime > GPU_queue[index].wruntime){ 
-					min_runtime = GPU_queue[index].wruntime;	
-					s_idx = index;
-				}
-			}
-		}
-
-
-
-
-			} // slo_div end
+				s_idx = PSLO_MAEL_Scheduler(GPU_queue);
+			} 
+			
 	
 			if(s_idx == -1) // first elemnet of the queue
 				s_idx = 0;
@@ -1857,103 +1894,8 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			}
 
 			else if(algo_cmd.compare("slo_div") == 0) {
-       		gettimeofday(&tp, NULL);  // Added
-		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
-
-		for(int i = 0; i < DSP_queue.size(); i++) {
-			if(DSP_queue[i].id == 'v' && DSP_queue[i].layer_num == 0) 
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 85);
-			else if(DSP_queue[i].id == 'v' && DSP_queue[i].layer_num == 1) 
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 55);
-			else if(DSP_queue[i].id == 'v' && DSP_queue[i].layer_num == 2) 
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 25);
-			else if(DSP_queue[i].id == 'v' && DSP_queue[i].layer_num == 3) 
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 0);
-
-			else if(DSP_queue[i].id == 'y' && DSP_queue[i].layer_num == 0)
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 55);
-			else if(DSP_queue[i].id == 'y' && DSP_queue[i].layer_num == 1)
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 45);
-			else if(DSP_queue[i].id == 'y' && DSP_queue[i].layer_num == 2)
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 35);
-			else if(DSP_queue[i].id == 'y' && DSP_queue[i].layer_num == 3)
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + 15);
-
-			else
-				DSP_queue[i].wruntime = DSP_queue[i].deadline - (cur_time - DSP_queue[i].batch_enqueue_time + DSP_queue[i].runtime );
-		}
-
-
-		if(s_idx == -1) { 
-			vector<int> possible_index;	
-
-			for(int i = 0; i < DSP_queue.size(); i++) {
-				if(DSP_queue[i].layer_num == 0)  {
-					s_idx = i;
-					possible_index.push_back(s_idx);
-				}
-
-				else if(DSP_queue[i].layer_num == 1) {
-					int pid = DSP_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < Parent_queue.size(); j++) {
-						if(pid == Parent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-
-				else if(DSP_queue[i].layer_num == 2) {
-					int pid = DSP_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < PParent_queue.size(); j++) {
-						if(pid == PParent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-
-				else if(DSP_queue[i].layer_num == 3) {
-					int pid = DSP_queue[i].task_idx;
-					bool parent_finish = true;
-		
-					for(int j = 0; j < PPParent_queue.size(); j++) {
-						if(pid == PPParent_queue[j]) {
-							parent_finish = false;
-							break;
-						}
-					}
-					if(parent_finish == true) {
-						s_idx = i;
-						possible_index.push_back(s_idx);
-					}
-				}
-			}
-	
-			int min_runtime = 999999;
-			for(int i = 0; i < possible_index.size(); i++) {
-				int index = possible_index[i]; 
-				if(min_runtime > DSP_queue[index].wruntime){ 
-					min_runtime = DSP_queue[index].wruntime;	
-					s_idx = index;
-				}
-			}
-		}
-
-
-			} // slo_div end
+				s_idx = PSLO_MAEL_Scheduler(DSP_queue);
+			} 
 		
 			if(s_idx == -1) // first element of the queue
 				s_idx = 0;
