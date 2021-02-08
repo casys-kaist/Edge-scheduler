@@ -318,6 +318,7 @@ public:
 	int total_layer_num;
 	float runtime;
 	float wruntime;
+	float rruntime; // remaining time
 
 	float exp_runtime; // expected runtime
 	float exp_latency; // expected latency
@@ -337,6 +338,7 @@ public:
         Task(char _id, int _arrival_time){
 		id = _id;
 		arrival_time = _arrival_time;
+		rruntime = 0;
 	}
 };
 
@@ -948,18 +950,24 @@ void EnqueueTask(Model_Parameter* selected, Task* task, int emergency_on){
 		if(new_task->dev == 'B'){
 			new_task->runtime = selected->BIG_runtime[i];
 			new_task->wruntime = selected->BIG_runtime[i];
+			for(int j = i; j < selected->num_layers; j++) 
+				new_task->rruntime += selected->BIG_runtime[j];  
 			new_task->wait_queue_length = BIG_queue.size();
 			BIG_queue.push_back(*new_task);
 		}
 		else if(new_task->dev == 'G'){ 
 			new_task->runtime = selected->GPU_runtime[i];
 			new_task->wruntime = selected->GPU_runtime[i];
+			for(int j = i; j < selected->num_layers; j++) 
+				new_task->rruntime += selected->GPU_runtime[j];  
 			new_task->wait_queue_length = GPU_queue.size();
 			GPU_queue.push_back(*new_task);
 		}
 		else if(new_task->dev == 'D'){ 
 			new_task->runtime = selected->DSP_runtime[i];
 			new_task->wruntime = selected->DSP_runtime[i];
+			for(int j = i; j < selected->num_layers; j++) 
+				new_task->rruntime += selected->DSP_runtime[j];  
 			new_task->wait_queue_length = DSP_queue.size();
 			DSP_queue.push_back(*new_task);
 		}
@@ -1643,50 +1651,9 @@ float CalculateRemainingTime(Task* task, long int cur_time) {
 	
 	if(task->total_layer_num == 1) 
 		remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + task->runtime);
-	else if(task->total_layer_num == 4) {
-		if(task->dev == 'G') {
-			if(task->id == 'v' && task->layer_num == 0)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 220);
-			else if(task->id == 'v' && task->layer_num == 1)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 130);
-			else if(task->id == 'v' && task->layer_num == 2)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 80);
-			else if(task->id == 'v' && task->layer_num == 3)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 30);
-	
-			else if(task->id == 'y' && task->layer_num == 0)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
-			else if(task->id == 'y' && task->layer_num == 1)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 45);
-			else if(task->id == 'y' && task->layer_num == 2)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 35);
-			else if(task->id == 'y' && task->layer_num == 3)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 15);
-
-		}
-		else if(task->dev == 'D') {
-			if(task->id == 'v' && task->layer_num == 0) 
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 85);
-			else if(task->id == 'v' && task->layer_num == 1) 
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
-			else if(task->id == 'v' && task->layer_num == 2) 
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 25);
-			else if(task->id == 'v' && task->layer_num == 3) 
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 0);
-
-			else if(task->id == 'y' && task->layer_num == 0)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 55);
-			else if(task->id == 'y' && task->layer_num == 1)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 45);
-			else if(task->id == 'y' && task->layer_num == 2)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 35);
-			else if(task->id == 'y' && task->layer_num == 3)
-				remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + 15);
-
-
-		}
-	}
-
+	else if(task->total_layer_num == 4) 
+		remaining_time = task->deadline - (cur_time - task->batch_enqueue_time + task->rruntime);
+		
 	return remaining_time;
 }
 
