@@ -1591,7 +1591,7 @@ void RunTask(Task* task){
     }
 
 
-    std::cout << task->layer_num << task->total_layer_num << " "  << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
+    std::cout << task->layer_num + 1 << "/" << task->total_layer_num << " "  << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;
 	
     if(task->dev == 'B'){
     	Write_file_BIG << task->id << task->task_idx << " Latency: " << real_latency << " ms " << task->dev << " " << task->arrival_time <<  std::endl;  
