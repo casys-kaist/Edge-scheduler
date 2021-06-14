@@ -22,15 +22,9 @@ from collections import Counter
 #	 8: fasterrcnn
 ####################################################
 
+# min runtime
 # alexnet, vgg, lenet, googlenet, resnet, mobilenet, squeezenet, yolov2, frcnn
 Models_min_runtimes = [20, 91, 5, 16, 36.8, 12.2, 12.6, 47.2, 20.4]
-
-def DefineScenarios():
-	all_scenarios = []
-	ratio = [1, 2, 1, 1, 1, 1] # ratio
-	all_scenarios.append(ratio)
-
-	return all_scenarios
 
 # num_request_based
 def GeneratePoissonRequest(req_queue, _lambda, num_requests, max_arr_time):
@@ -49,11 +43,7 @@ def GeneratePoissonRequest(req_queue, _lambda, num_requests, max_arr_time):
 			#Add the inter-arrival time to the running sum
 			_arrival_time = _arrival_time + _inter_arrival_time
 			
-			# second
-			#print it all out
-			#print(str(i)+': '+str(_inter_arrival_time)+','+str(_arrival_time))
 			req_queue_tmp.append(int(_arrival_time * 1000)) # sec -> ms
-			#req_queue.append(_arrival_time)
 
 		last_arrival_time = req_queue_tmp[-1]	
 	
@@ -61,7 +51,6 @@ def GeneratePoissonRequest(req_queue, _lambda, num_requests, max_arr_time):
 		req_queue.append(req_queue_tmp[i])
 		
 	req_queue.sort()
-	#print(req_queue)
 	
 	return num_requests
 
@@ -90,16 +79,9 @@ def GetTotalRequest(selected_model_min_runtimes, max_arrtime, scenario, intensit
 	for i in range(0, len(selected_model_min_runtimes)):
 		ideal_req.append(max_arrtime / selected_model_min_runtimes[i])
 
-	#print(selected_model_min_runtimes)
-	#for i in range(0, len(ideal_req)):
-	#	print(ideal_req[i])
-
 	for i in range(0, len(scenario)):
 		model_total_req.append( int(intensity * (ideal_req[i] * float(scenario[i])/sum(scenario) )))
 
-	#print(model_total_req)
-	#print(scenario)
-		
 	return model_total_req
 	
 # For each iteration
@@ -264,7 +246,6 @@ def ExportResults(input_full_path, scenario_num, intensity, model, req_queue, mo
 	
 def GenerateRequestMain(configFile, inputDirectoryPath):
 	interval, model, base_lambda, intensity, max_arrtime, scenarios = ReadInputConfigs(configFile)	
-	#scenario = DefineScenarios() 
 
 	printConfigInfo(interval, model, base_lambda, intensity, max_arrtime)
 
