@@ -2,14 +2,9 @@ import sys
 import operator
 import os
 import re
-import numpy as np
-import matplotlib.pyplot as plt
-import math
-import random
 
 # Push Input Request to Device &
 # Pull Results from Device 
-
 
 
 def makeDirectory(localPath, remotePath):
@@ -36,12 +31,12 @@ def pushInputsToDevice(localPath, remotePath):
 		os.system(cmd)
 
 
+# Pull Results from Android Device
 def pullResultsFromDevice(localPath, remotePath):
 	os.system("adb pull " + remotePath + " " + localPath + "AFF/")
 	os.system("adb pull " + remotePath + " " + localPath + "MAEL/")
 	os.system("adb pull " + remotePath + " " + localPath + "SLO-MAEL/")
 	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
-
 
 if __name__== "__main__":
 	print("============================================================================")
@@ -51,14 +46,13 @@ if __name__== "__main__":
 	print("[Example]: python IODevicectrl.py I Inputfiles/predefined /data/local/tmp/request_file/")
 	print("==========================================================================")
 
-	cmd = sys.argv[1]
-	localPath = sys.argv[2] 
-	remotePath = sys.argv[3] 
-	
 	if( len(sys.argv) != 4):
 		print("[Error]: requires 4 arguments")
 		sys.exit(1)
 	else:
+		cmd = sys.argv[1]
+		localPath = sys.argv[2] 
+		remotePath = sys.argv[3] 
 		makeDirectory(localPath, remotePath)
 	
 	if(cmd == "I"):
