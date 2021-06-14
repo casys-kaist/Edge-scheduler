@@ -11,14 +11,24 @@ import random
 # Pull Results from Device 
 
 
+
+def makeDirectory(localPath, remotePath):
+	# For local
+	os.system("mkdir " + localPath + "I/")
+	os.system("mkdir " + localPath + "AFF/")
+	os.system("mkdir " + localPath + "MAEL/")
+	os.system("mkdir " + localPath + "SLO-MAEL/")
+	os.system("mkdir " + localPath + "PSLO-MAEL/")
+
+	# For remote device
+	os.system("adb shell mkdir -p " +  remotePath + "I/") 
+	os.system("adb shell mkdir -p " +  remotePath + "AFF/") 
+	os.system("adb shell mkdir -p " +  remotePath + "MAEL/") 
+	os.system("adb shell mkdir -p " +  remotePath + "SLO-MAEL/") 
+	os.system("adb shell mkdir -p " +  remotePath + "PSLO-MAEL/") 
+
 # Push Input Request to Android Device
 def pushInputsToDevice(localPath, remotePath):
-	os.system("adb shell mkdir -p " +  remotePath + "I/") # for input
-	os.system("adb shell mkdir -p " +  remotePath + "AFF/") # for AFF
-	os.system("adb shell mkdir -p " +  remotePath + "MAEL/") # for MAEL
-	os.system("adb shell mkdir -p " +  remotePath + "SLO-MAEL/") # for SLO-MAEL
-	os.system("adb shell mkdir -p " +  remotePath + "PSLO-MAEL/") # for PSLO-MAEL
-
 	onlyfiles = [f for f in os.listdir(localPath) if os.path.isfile(os.path.join(localPath, f))]
 
 	for i in range(0, len(onlyfiles)):
@@ -26,48 +36,11 @@ def pushInputsToDevice(localPath, remotePath):
 		os.system(cmd)
 
 
-# Pull Results from Device 
-
-def pull_subset(Req_name, Result_path, algo):
-	if os.path.isdir(Result_path) == False:
-		os.system("mkdir " + Result_path)
-
-	algo_path = Result_path + "/" + Req_name + algo + "_O"
-
-	os.system("mkdir " + algo_path)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+algo+"_O/ "+algo_path)
-
-def pull(Req_name, Result_path):
-	
-	if os.path.isdir(Result_path) == False:
-		os.system("mkdir " + Result_path)
-		
-	gpu = Result_path + "/" + Req_name + "gpu_O"
-	dsp = Result_path + "/" + Req_name + "dsp_O"
-	lb = Result_path + "/" + Req_name + "lb_O"
-	st = Result_path + "/" + Req_name + "st_O"
-	my = Result_path + "/" + Req_name + "my_O"
-	slo = Result_path + "/" + Req_name + "slo_O"
-	slo_div = Result_path + "/" + Req_name + "slo_div_O"
-		
-	os.system("mkdir " + gpu)
-	os.system("mkdir " + dsp)
-	os.system("mkdir " + lb)
-	os.system("mkdir " + st)
-	os.system("mkdir " + my)
-	os.system("mkdir " + slo)
-	os.system("mkdir " + slo_div)
-	
-	
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"gpu_O/ " +gpu)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"dsp_O/ " +dsp)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"lb_O/ " +lb)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"st_O/ " +st)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"my_O/ " +my)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"slo_O/ " +slo)
-	os.system("adb pull /data/local/tmp/request_file/"+Req_name+"slo_div_O/ " +slo_div)
-
-
+def pullResultsFromDevice(localPath, remotePath):
+	os.system("adb pull " + remotePath + " " + localPath + "AFF/")
+	os.system("adb pull " + remotePath + " " + localPath + "MAEL/")
+	os.system("adb pull " + remotePath + " " + localPath + "SLO-MAEL/")
+	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
 
 
 if __name__== "__main__":
@@ -85,12 +58,13 @@ if __name__== "__main__":
 	if( len(sys.argv) != 4):
 		print("[Error]: requires 4 arguments")
 		sys.exit(1)
-
+	else:
+		makeDirectory(localPath, remotePath)
 	
 	if(cmd == "I"):
 		pushInputsToDevice(localPath, remotePath)
 	elif(cmd == "O"):
-		pass
+		pullResultsFromDevice(localPath, remotePath)
 	else:
 		print("[Error]: requires \'I\' or \'O\' cmd")
 		sys.exit(1)
