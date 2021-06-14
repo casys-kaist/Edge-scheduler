@@ -10,6 +10,8 @@ import random
 # Push Input Request to Device &
 # Pull Result from Device 
 
+
+# Push Input Request to Android Device
 def pushInputsToDevice(localPath, remotePath):
 	os.system("adb shell mkdir -p " +  remotePath + "I/") # for input
 	os.system("adb shell mkdir -p " +  remotePath + "AFF/") # for AFF
@@ -27,8 +29,8 @@ def pushInputsToDevice(localPath, remotePath):
 if __name__== "__main__":
 	print("============================================================================")
 	print("[Usage]: python push.py <cmd> <local> <remote>")
-	print("<cmd>: \'I\', push requests to device") 
-	print("<cmd>: \'O\', pull results from device") 
+	print("<cmd>: I, push requests to device") 
+	print("<cmd>: O, pull results from device") 
 	print("[Example]: python IODevicectrl.py I Inputfiles/predefined /data/local/tmp/request_file/")
 	print("==========================================================================")
 
@@ -42,6 +44,10 @@ if __name__== "__main__":
 
 	
 	if(cmd == "I"):
+		pushInputsToDevice(localPath, remotePath)
+	elif(cmd == "O"):
 		pass
-		#pushInputsToDevice(localPath, remotePath):
+	else:
+		print("[Error]: requires \'I\' or \'O\' cmd")
+		sys.exit(1)
 	
