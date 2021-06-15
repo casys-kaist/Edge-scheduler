@@ -71,9 +71,7 @@ int main(int argc, char** argv)
     int deadline_n = stoi(argv[3]); 
     int batch_window = stoi(argv[4]); 
 
-    string in_dir_name = "/home/wonik/test/";
-//    string in_dir_name = "/data/local/tmp/request_file/" + input_name  +"I/";
-//    string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
+    string in_dir_name = "/home/yourInputPath/";
 
     vector<string> req_inputfiles;
     ReadDirectory(in_dir_name, req_inputfiles);
