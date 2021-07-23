@@ -261,6 +261,7 @@ def GenerateRequestMain(configFile, inputDirectoryPath):
 
 
 if __name__=="__main__":
+	"""
 	print("Usage: python RequestGenerator.py InputDirectoryName ConfigFile")
 
 	if len(sys.argv) != 3:
@@ -279,26 +280,29 @@ if __name__=="__main__":
 	os.system("mkdir " + inputDirectoryPath)
 
 	GenerateRequestMain(configFile, inputDirectoryPath)
+	"""
 
-	
 
-	parser = argparse.ArgumentParser(description='[ERROR] Example Usage: python RequestGenerator.py <output_path> <config_file>')
-	parser.add_argument('-push', type=str, nargs=2, metavar=('<local>', '<remote>'),
-			help='copy file/dir to device')
-	parser.add_argument('-pull', type=str, nargs=2, metavar=('<local>', '<remote>'),
-			help='copy file/dir from device')
+	parser = argparse.ArgumentParser(description='[Example] Example Usage: python RequestGenerator.py <output_path> <config_file>')
+	parser.add_argument('-run', type=str, nargs=2, metavar=('<output_path>', '<config_file>'),
+			help='Generate input requests file with config file')
 	args = parser.parse_args()
 
-	if args.push: 
-		localPath = args.push[0]
-		remotePath = args.push[1]
-		makeDirectory(localPath, remotePath)
-		pushInputsToDevice(localPath, remotePath)
-	elif args.pull: 
-		localPath = args.push[0]
-		remotePath = args.push[1]
-		makeDirectory(localPath, remotePath)
-		pullResultsFromDevice(localPath, remotePath)
+	if args.run: 
+		cwd = os.getcwd()
+		inputDirectoryName = args.run[0]
+		inputDirectoryPath = cwd + "/" + inputDirectoryName
+		configFile = args.run[1]
+
+		# already have the directory included in input request files
+		# Remove all things 
+		if os.path.isdir(inputDirectoryPath) == True:
+			os.system("rm -rf " + inputDirectoryPath)		
+		os.system("mkdir " + inputDirectoryPath)
+
+		GenerateRequestMain(configFile, inputDirectoryPath)
+	else:
+		parser.error("[ERROR]: Please run this program with the -h flag to see required arguments")
 		
 	
 
