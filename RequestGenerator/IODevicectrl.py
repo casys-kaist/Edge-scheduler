@@ -50,9 +50,12 @@ if __name__== "__main__":
 		makeDirectory(localPath, remotePath)
 		pushInputsToDevice(localPath, remotePath)
 	elif args.pull: 
-		localPath = args.push[0]
-		remotePath = args.push[1]
+		localPath = args.pull[0]
+		remotePath = args.pull[1]
 		makeDirectory(localPath, remotePath)
 		pullResultsFromDevice(localPath, remotePath)
+	else:
+		parser.error("ERROR: Please run this program with the -h flag to see required arguments")
+
 		
 	
