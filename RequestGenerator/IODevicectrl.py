@@ -5,8 +5,6 @@ import re
 
 # Push Input Request to Device &
 # Pull Results from Device 
-
-
 def makeDirectory(localPath, remotePath):
 	# For local
 	os.system("mkdir " + localPath + "I/")
@@ -39,6 +37,7 @@ def pullResultsFromDevice(localPath, remotePath):
 	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
 
 if __name__== "__main__":
+	"""
 	print("============================================================================")
 	print("[Usage]: python push.py <cmd> <local> <remote>")
 	print("<cmd>: I, push requests to device") 
@@ -62,4 +61,24 @@ if __name__== "__main__":
 	else:
 		print("[Error]: requires \'I\' or \'O\' cmd")
 		sys.exit(1)
+	"""
+
+	parser = argparse.ArgumentParser(description='[Example]: python IODevicectrl.py <cmd> <local_path> <remote_path>')
+	parser.add_argument('-push', type=str, nargs=2, metavar=('<local>', '<remote>'),
+			help='copy file/dir to device')
+	parser.add_argument('-pull', type=str, nargs=2, metavar=('<local>', '<remote>'),
+			help='copy file/dir from device')
+	args = parser.parse_args()
+
+	if args.push: 
+		localPath = args.push[0]
+		remotePath = args.push[1]
+		makeDirectory(localPath, remotePath)
+		pushInputsToDevice(localPath, remotePath)
+	elif args.pull: 
+		localPath = args.push[0]
+		remotePath = args.push[1]
+		makeDirectory(localPath, remotePath)
+		pullResultsFromDevice(localPath, remotePath)
+		
 	
