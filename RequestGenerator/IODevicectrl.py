@@ -37,32 +37,6 @@ def pullResultsFromDevice(localPath, remotePath):
 	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
 
 if __name__== "__main__":
-	"""
-	print("============================================================================")
-	print("[Usage]: python push.py <cmd> <local> <remote>")
-	print("<cmd>: I, push requests to device") 
-	print("<cmd>: O, pull results from device") 
-	print("[Example]: python IODevicectrl.py I Inputfiles/predefined /data/local/tmp/request_file/")
-	print("==========================================================================")
-
-	if( len(sys.argv) != 4):
-		print("[Error]: requires 4 arguments")
-		sys.exit(1)
-	else:
-		cmd = sys.argv[1]
-		localPath = sys.argv[2] 
-		remotePath = sys.argv[3] 
-		makeDirectory(localPath, remotePath)
-	
-	if(cmd == "I"):
-		pushInputsToDevice(localPath, remotePath)
-	elif(cmd == "O"):
-		pullResultsFromDevice(localPath, remotePath)
-	else:
-		print("[Error]: requires \'I\' or \'O\' cmd")
-		sys.exit(1)
-	"""
-
 	parser = argparse.ArgumentParser(description='[Example]: python IODevicectrl.py <cmd> <local_path> <remote_path>')
 	parser.add_argument('-push', type=str, nargs=2, metavar=('<local>', '<remote>'),
 			help='copy file/dir to device')
