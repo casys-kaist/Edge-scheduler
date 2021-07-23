@@ -280,3 +280,26 @@ if __name__=="__main__":
 
 	GenerateRequestMain(configFile, inputDirectoryPath)
 
+	
+
+	parser = argparse.ArgumentParser(description='[ERROR] Example Usage: python RequestGenerator.py <output_path> <config_file>')
+	parser.add_argument('-push', type=str, nargs=2, metavar=('<local>', '<remote>'),
+			help='copy file/dir to device')
+	parser.add_argument('-pull', type=str, nargs=2, metavar=('<local>', '<remote>'),
+			help='copy file/dir from device')
+	args = parser.parse_args()
+
+	if args.push: 
+		localPath = args.push[0]
+		remotePath = args.push[1]
+		makeDirectory(localPath, remotePath)
+		pushInputsToDevice(localPath, remotePath)
+	elif args.pull: 
+		localPath = args.push[0]
+		remotePath = args.push[1]
+		makeDirectory(localPath, remotePath)
+		pullResultsFromDevice(localPath, remotePath)
+		
+	
+
+
