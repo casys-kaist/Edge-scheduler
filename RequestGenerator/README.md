@@ -1,9 +1,7 @@
 # Description (func)
-1. Generate input requests based on Poisson distribution.
-
-2. Copy input requests to device.
-
-3. Copy output from device.
+1. Generate input requests based on Poisson distribution. 
+2. Copy input requests to device. 
+3. Copy output from device. 
 
 # Requirement
 Config file
@@ -24,6 +22,6 @@ Intensity: 1.4
 Max arrival time: 2000
 
 # Usage
-python RequestGenerator.py -cmd <arg1> <arg2> 
+python RequestGenerator.py -cmd '<'arg1'>' '<'arg2'>' 
 
 -Please run this program with the -h flag to see required arguments
