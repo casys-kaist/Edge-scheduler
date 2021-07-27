@@ -259,6 +259,38 @@ def GenerateRequestMain(configFile, inputDirectoryPath):
 						PrintInfo(interval[i], model, base_lambda[j], intensity[k], max_arrtime[l], scenarios[m], req_queue)
 						ExportResults(inputDirectoryPath, m, intensity[k], model, req_queue, model_tot_req)
 
+# Push Input Request to Device &
+# Pull Results from Device 
+def makeDirectory(localPath, remotePath):
+	# For local
+	os.system("mkdir " + localPath + "I/")
+	os.system("mkdir " + localPath + "AFF/")
+	os.system("mkdir " + localPath + "MAEL/")
+	os.system("mkdir " + localPath + "SLO-MAEL/")
+	os.system("mkdir " + localPath + "PSLO-MAEL/")
+
+	# For remote device
+	os.system("adb shell mkdir -p " +  remotePath + "I/") 
+	os.system("adb shell mkdir -p " +  remotePath + "AFF/") 
+	os.system("adb shell mkdir -p " +  remotePath + "MAEL/") 
+	os.system("adb shell mkdir -p " +  remotePath + "SLO-MAEL/") 
+	os.system("adb shell mkdir -p " +  remotePath + "PSLO-MAEL/") 
+
+# Push Input Request to Android Device
+def pushInputsToDevice(localPath, remotePath):
+	onlyfiles = [f for f in os.listdir(localPath) if os.path.isfile(os.path.join(localPath, f))]
+
+	for i in range(0, len(onlyfiles)):
+		cmd = "adb push " + localPath + onlyfiles[i] + " " + remotePath + "I/" 
+		os.system(cmd)
+
+
+# Pull Results from Android Device
+def pullResultsFromDevice(localPath, remotePath):
+	os.system("adb pull " + remotePath + " " + localPath + "AFF/")
+	os.system("adb pull " + remotePath + " " + localPath + "MAEL/")
+	os.system("adb pull " + remotePath + " " + localPath + "SLO-MAEL/")
+	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
 
 if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='[Example] Example Usage: python RequestGenerator.py <output_path> <config_file>')
