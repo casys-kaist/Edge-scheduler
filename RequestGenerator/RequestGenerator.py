@@ -2,6 +2,7 @@ import copy
 import itertools
 import sys
 import random
+import argparse
 import os
 import re
 import numpy as np
@@ -293,12 +294,27 @@ def pullResultsFromDevice(localPath, remotePath):
 	os.system("adb pull " + remotePath + " " + localPath + "PSLO-MAEL/")
 
 if __name__=="__main__":
-	parser = argparse.ArgumentParser(description='[Example] Example Usage: python RequestGenerator.py <output_path> <config_file>')
+	parser = argparse.ArgumentParser(description='[Example] Example Usage: python RequestGenerator.py -cmd <arg1> <arg2>')
+
+	parser.add_argument('-push', type=str, nargs=2, metavar=('<local_path>', '<remote_path>'),
+			help='copy file/dir to device')
+	parser.add_argument('-pull', type=str, nargs=2, metavar=('<local_path>', '<remote_path>'),
+			help='copy file/dir from device')
 	parser.add_argument('-run', type=str, nargs=2, metavar=('<output_path>', '<config_file>'),
 			help='Generate input requests file with config file')
 	args = parser.parse_args()
 
-	if args.run: 
+	if args.push: 
+		localPath = args.push[0]
+		remotePath = args.push[1]
+		makeDirectory(localPath, remotePath)
+		pushInputsToDevice(localPath, remotePath)
+	elif args.pull: 
+		localPath = args.pull[0]
+		remotePath = args.pull[1]
+		makeDirectory(localPath, remotePath)
+		pullResultsFromDevice(localPath, remotePath)
+	elif args.run: 
 		cwd = os.getcwd()
 		inputDirectoryName = args.run[0]
 		inputDirectoryPath = cwd + "/" + inputDirectoryName
