@@ -261,28 +261,6 @@ def GenerateRequestMain(configFile, inputDirectoryPath):
 
 
 if __name__=="__main__":
-	"""
-	print("Usage: python RequestGenerator.py InputDirectoryName ConfigFile")
-
-	if len(sys.argv) != 3:
-		print("[ERROR] Example Usage: python <RequestGenerator.py> <poisson_grms> <config>")
-		exit(1)
-
-	cwd = os.getcwd()
-	inputDirectoryName = sys.argv[1]
-	inputDirectoryPath = cwd + "/" + inputDirectoryName
-	configFile = sys.argv[2]
-
-	# already have the directory included in input request files
-	# Remove all things 
-	if os.path.isdir(inputDirectoryPath) == True:
-		os.system("rm -rf " + inputDirectoryPath)		
-	os.system("mkdir " + inputDirectoryPath)
-
-	GenerateRequestMain(configFile, inputDirectoryPath)
-	"""
-
-
 	parser = argparse.ArgumentParser(description='[Example] Example Usage: python RequestGenerator.py <output_path> <config_file>')
 	parser.add_argument('-run', type=str, nargs=2, metavar=('<output_path>', '<config_file>'),
 			help='Generate input requests file with config file')
