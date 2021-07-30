@@ -43,6 +43,144 @@
 #include "DiagLog/IDiagLog.hpp"
 
 
+std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string mode, int batchSize) {
+
+    // Check if given arguments represent valid files
+    std::ifstream dlcFile(dlc);
+    //std::ifstream inputList(inputFile);
+    if (!dlcFile) {
+        std::cout << "Input list or dlc file not valid. Please ensure that you have provided a valid input list and dlc for processing. Run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(FAILURE);
+    }
+
+    // Check if given buffer type is valid
+    int bufferType;
+    if (bufferTypeStr == "USERBUFFER_FLOAT")
+    {
+        bufferType = USERBUFFER_FLOAT;
+    }
+    else if (bufferTypeStr == "USERBUFFER_TF8")
+    {
+        bufferType = USERBUFFER_TF8;
+    }
+    else if (bufferTypeStr == "ITENSOR")
+    {
+        bufferType = ITENSOR;
+    }
+    else
+    {
+        std::cout << "Buffer type is not valid. Please run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(FAILURE);
+    }
+
+    // Open the DL container that contains the network to execute.
+    // Create an instance of the SNPE network from the now opened container.
+    // The factory functions provided by SNPE allow for the specification
+    // of which layers of the network should be returned as output and also
+    // if the network should be run on the CPU or GPU.
+    // The runtime availability API allows for runtime support to be queried.
+    // If a selected runtime is not available, we will issue a warning and continue,
+    // expecting the invalid configuration to be caught at SNPE network creation.
+    zdl::DlSystem::UDLFactoryFunc udlFunc = sample::MyUDLFactory;
+    zdl::DlSystem::UDLBundle udlBundle; udlBundle.cookie = (void*)0xdeadbeaf, udlBundle.func = udlFunc; // 0xdeadbeaf to test cookie
+
+    zdl::DlSystem::Runtime_t runtime = zdl::DlSystem::Runtime_t::CPU;
+                if (mode[0] == 'g') 
+                {
+                    runtime = zdl::DlSystem::Runtime_t::GPU;
+                }
+                else if (mode[0] == 'd') 
+                {
+                    runtime = zdl::DlSystem::Runtime_t::DSP;
+                }
+                else if (mode[0] == 'c') 
+                {
+                   runtime = zdl::DlSystem::Runtime_t::CPU;
+                }
+    runtime = checkRuntime(runtime);
+    std::unique_ptr<zdl::DlContainer::IDlContainer> container = loadContainerFromFile(dlc);
+    if (container == nullptr)
+    {
+       std::cerr << "Error while opening the container file." << std::endl;
+       std::exit(FAILURE);
+    }
+
+    bool useUserSuppliedBuffers = (bufferType == USERBUFFER_FLOAT || bufferType == USERBUFFER_TF8);
+
+    zdl::DlSystem::PlatformConfig platformConfig;
+
+    std::unique_ptr<zdl::SNPE::SNPE> snpe = setBuilderOptions(container, runtime, udlBundle, useUserSuppliedBuffers, platformConfig, usingInitCaching);
+    if (snpe == nullptr)
+    {
+       std::cerr << "Error while building SNPE object." << std::endl;
+       std::exit(FAILURE);
+    }
+    if (usingInitCaching)
+    {
+       if (container->save(dlc))
+       {
+          std::cout << "Saved container into archive successfully" << std::endl;
+       }
+       else
+       {
+          std::cout << "Failed to save container into archive" << std::endl;
+       }
+    }
+
+    // get Input tensor name
+    const auto &strList_opt = snpe->getInputTensorNames();
+    if (!strList_opt) throw std::runtime_error("Error obtaining Input tensor names");
+    const auto &strList = *strList_opt;
+  
+    // get tensorShape
+    zdl::DlSystem::TensorShape tensorShape;
+    tensorShape = snpe->getInputDimensions();
+    // set new batch size	
+    tensorShape[0] = batchSize;
+
+    // set TensorshapeMap
+    zdl::DlSystem::TensorShapeMap tensorShapeMap;
+    tensorShapeMap.add(strList.at(0), tensorShape);
+
+  
+    std::unique_ptr<zdl::SNPE::SNPE> snpe_final = setBuilderOptions(container, runtime, udlBundle, useUserSuppliedBuffers, platformConfig, tensorShapeMap, usingInitCaching);
+    if (snpe_final == nullptr)
+    {
+       std::cerr << "Error while building SNPE object." << std::endl;
+       std::exit(FAILURE);
+    }
+    if (usingInitCaching)
+    {
+       if (container->save(dlc))
+       {
+          std::cout << "Saved container into archive successfully" << std::endl;
+       }
+       else
+       {
+          std::cout << "Failed to save container into archive" << std::endl;
+       }
+    }
+
+    // Configure logging output and start logging. The snpe-diagview
+    // executable can be used to read the content of this diagnostics file
+    auto logger_opt = snpe->getDiagLogInterface();
+    if (!logger_opt) throw std::runtime_error("SNPE failed to obtain logging interface");
+    auto logger = *logger_opt;
+    auto opts = logger->getOptions();
+
+    opts.LogFileDirectory = OutputDir;
+    if(!logger->setOptions(opts)) {
+        std::cerr << "Failed to set options" << std::endl;
+        std::exit(FAILURE);
+    }
+    if (!logger->start()) {
+        std::cerr << "Failed to start logger" << std::endl;
+        std::exit(FAILURE);
+    }
+    return std::move(snpe_final);
+}
+
+
 void build_setup(std::string app_OutputDir,std::string app_layerPath, std::string mode_list, int batchSize){
     std::string mode = ""; 
 
