@@ -42,6 +42,8 @@
 #include "SNPE/SNPE.hpp"
 #include "DiagLog/IDiagLog.hpp"
 
+
+/*
 const int FAILURE = 1;
 const int SUCCESS = 0;
 
@@ -380,8 +382,7 @@ int main(int argc, char** argv)
     }
     else if(bufferType == ITENSOR)
     {
-        // A tensor map for SNPE execution outputs
-        zdl::DlSystem::TensorMap outputTensorMap;
+        // A tensor map for SNPE execution outputs zdl::DlSystem::TensorMap outputTensorMap;
 
         for (size_t i = 0; i < inputs.size(); i++) {
             // Load input/output buffers with ITensor
@@ -403,3 +404,4 @@ int main(int argc, char** argv)
     }
     return SUCCESS;
 }
+*/
