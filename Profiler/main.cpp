@@ -21,6 +21,9 @@
 #include <iterator>
 #include <unordered_map>
 #include <algorithm>
+#include <ctime> // Added
+#include <sys/time.h> //Added
+#include <unistd.h> //Added
 
 #include "CheckRuntime.hpp"
 #include "LoadContainer.hpp"
@@ -52,6 +55,9 @@ int main(int argc, char** argv)
 {
     enum {UNKNOWN, USERBUFFER_FLOAT, USERBUFFER_TF8, ITENSOR};
     enum {CPUBUFFER, GLBUFFER};
+    // elapsed timer
+    struct timeval tp; // Added
+    long int before_all, after_all; // Added
 
     // Command line arguments
     static std::string dlc = "";
@@ -64,6 +70,7 @@ int main(int argc, char** argv)
     bool runtimeSpecified = false;
     bool execStatus = false;
     bool usingInitCaching = false;
+ 
 
     // Process command line arguments
     int opt = 0;
@@ -390,7 +397,12 @@ int main(int argc, char** argv)
                  return EXIT_FAILURE;
              }
              // Execute the input buffer map on the model with SNPE
+	     gettimeofday(&tp, NULL);  // Added
+   	     before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
              execStatus = snpe->execute(inputMap, outputMap);
+             gettimeofday(&tp, NULL);  // Added
+             after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+             std::cout << "Execute Network : " << after_all - before_all << " ms" <<  std::endl; //Added 
              // Save the execution results only if successful
              if (execStatus == true)
              {
@@ -425,7 +437,12 @@ int main(int argc, char** argv)
                     return EXIT_FAILURE;
                 }
                 // Execute the input buffer map on the model with SNPE
+	     	gettimeofday(&tp, NULL);  // Added
+   	     	before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
                 execStatus = snpe->execute(inputMap, outputMap);
+            	gettimeofday(&tp, NULL);  // Added
+            	after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            	std::cout << "Execute Network : " << after_all - before_all << " ms" <<  std::endl; //Added 
                 // Save the execution results only if successful
                 if (execStatus == true)
                 {
@@ -450,7 +467,12 @@ int main(int argc, char** argv)
                     glBuffers = glBuffer->convertImage2GLBuffer(inputs[i], bufSize);
                     loadInputUserBuffer(applicationInputBuffers, snpe, glBuffers);
                     // Execute the input buffer map on the model with SNPE
+	     	    gettimeofday(&tp, NULL);  // Added
+   	     	    before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
                     execStatus =  snpe->execute(inputMap, outputMap);
+            	    gettimeofday(&tp, NULL);  // Added
+            	    after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            	    std::cout << "Execute Network : " << after_all - before_all << " ms" <<  std::endl; //Added 
                     // Save the execution results only if successful
                     if (execStatus == true) {
                         if(!saveOutput(outputMap, applicationOutputBuffers, OutputDir, i*batchSize, batchSize, false))
@@ -484,7 +506,12 @@ int main(int argc, char** argv)
                 return EXIT_FAILURE;
             }
             // Execute the input tensor on the model with SNPE
+	    gettimeofday(&tp, NULL);  // Added
+   	    before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
             execStatus = snpe->execute(inputTensor.get(), outputTensorMap);
+            gettimeofday(&tp, NULL);  // Added
+            after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            std::cout << "Execute Network : " << after_all - before_all << " ms" <<  std::endl; //Added 
             // Save the execution results if execution successful
             if (execStatus == true)
             {
