@@ -184,7 +184,7 @@ std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDi
 void build_setup(std::string app_OutputDir,std::string app_layerPath, std::string mode_list, int batchSize){
     std::string mode = ""; 
 
-    for(int i = 0; i < num_input_layers; i++) {
+    for(int i = 0; i < mode_list.size(); i++) {
 	stringstream part_num;
 	part_num << i;
 	std::string app_layerPath_full = app_layerPath + part_num.str() + ".dlc";
@@ -199,6 +199,24 @@ void build_setup(std::string app_OutputDir,std::string app_layerPath, std::strin
 }
 
 
+int main(int argc, char** argv)
+{
+    std::string app_layerPath; // argv[1]
+    const char* app_inputFile;  // argv[2]
+    std::string app_OutputDir; // argv[3]
+    std::string mode_list; // argv[4]
+    int batchSize = 1; // argv[5]
+
+    // Usage: snpe-trace <Model_dlc_path> <inputfile_path> <output_path> <DEVICEs..> <Batch>
+    std::cout <<  "Usage: snpe-trace <Model_dlc_path> <inputfile_path> <output_path> <DEVICEs..> <Batch>" << std::endl;
+
+    if(argv[5] != NULL){
+	batchSize = atoi(argv[5]);
+    }
+    build_setup(app_OutputDir, app_layerPath, mode_list, batchSize);
+    DNN_execute(app_OutputDir, app_inputFile);
+
+}
 
 /*
 const int FAILURE = 1;
