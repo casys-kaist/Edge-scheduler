@@ -58,6 +58,10 @@ const int SUCCESS = 0;
 
 int DNN_execute(std::string OutputDir, const char* inputFile){
 
+    struct timeval tp; // Added
+    long int before_all, after_all; // Added
+    long int before_part, after_part; // Added 
+
     std::ifstream inputList(inputFile);
     if (!inputList) {
         std::cout << "Input list or dlc file not valid. Please ensure that you have provided a valid input list and dlc for processing. Run snpe-sample with the -h flag for more details" << std::endl;
@@ -160,12 +164,12 @@ int DNN_execute(std::string OutputDir, const char* inputFile){
                 loadInputUserBufferFloat(applicationInputBuffers, SNPE.at(0), inputs[0]);
 
                 // Execute the input buffer map on the model with SNPE
-	    	//gettimeofday(&tp, NULL);  // Added
-   	    	//before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+	    	gettimeofday(&tp, NULL);  // Added
+   	    	before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
                 execStatus = SNPE.at(0)->execute(inputMap, outputMap);
-            	//gettimeofday(&tp, NULL);  // Added
-            	//after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
-            	//std::cout << "Execute Part Network "<< "0" << ": " << after_all - before_all << " ms" <<  std::endl; //Added 
+            	gettimeofday(&tp, NULL);  // Added
+            	after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            	std::cout << "Execute Part Network "<< "0" << ": " << after_all - before_all << " ms" <<  std::endl; //Added 
 		
              }
           }
