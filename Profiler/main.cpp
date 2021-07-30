@@ -43,6 +43,25 @@
 #include "DiagLog/IDiagLog.hpp"
 
 
+void build_setup(std::string app_OutputDir,std::string app_layerPath, std::string mode_list, int batchSize){
+    std::string mode = ""; 
+
+    for(int i = 0; i < num_input_layers; i++) {
+	stringstream part_num;
+	part_num << i;
+	std::string app_layerPath_full = app_layerPath + part_num.str() + ".dlc";
+
+	if(mode_list[i] == '0') mode = "cpu";
+	else if(mode_list[i] == '1') mode = "gpu";
+	else if(mode_list[i] == '2') mode = "dsp";
+	
+	std::unique_ptr<zdl::SNPE::SNPE> snpe = DNN_build(app_layerPath_full, app_OutputDir, bufferTypeStr, userBufferSourceStr, mode, batchSize);
+	SNPE.push_back(std::move(snpe));	
+    }
+}
+
+
+
 /*
 const int FAILURE = 1;
 const int SUCCESS = 0;
