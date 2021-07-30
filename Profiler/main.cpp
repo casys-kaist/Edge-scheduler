@@ -174,6 +174,97 @@ int DNN_execute(std::string OutputDir, const char* inputFile){
              }
           }
        }
+       else if(bufferType == USERBUFFER_FLOAT && num_input_layers > 1)
+       {
+        // A tensor map for SNPE execution outputs
+        zdl::DlSystem::TensorMap outputTensorMap;
+        zdl::DlSystem::TensorMap midTensorMap1;
+        zdl::DlSystem::TensorMap midTensorMap2;
+
+	gettimeofday(&tp, NULL);  // Added
+   	before_total = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+        
+	int cnt = 0;
+        int max_cnt = 20;
+
+        for (size_t i = 0; i < inputs.size(); i++) {
+	    gettimeofday(&tp, NULL);  // Added
+   	    before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+
+            // Load input/output buffers with ITensor
+            loadInputUserBufferFloat(applicationInputBuffers, SNPE.at(0), inputs[0]);
+
+            gettimeofday(&tp, NULL);  // Added
+   	    before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            execStatus = SNPE.at(0)->execute(inputTensor.get(), midTensorMap1); 
+            gettimeofday(&tp, NULL);  // Added
+            after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            std::cout << "Execute Part Network "<< "0" << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+
+	    if(num_input_layers > 2) {
+	  	 for(int j = 1; j < num_input_layers - 1; j++) {
+        	    	gettimeofday(&tp, NULL);  // Added
+   	    		before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+			if(j % 2 == 1)
+            			execStatus = SNPE.at(j)->execute(midTensorMap1, midTensorMap2); 
+	  		else	
+          	  		execStatus = SNPE.at(j)->execute(midTensorMap2, midTensorMap1); 
+            		gettimeofday(&tp, NULL);  // Added
+            		after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            		std::cout << "Execute Part Network "<< j << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+	   	 }
+
+          	 gettimeofday(&tp, NULL);  // Added
+   	  	 before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+	   	 if((num_input_layers - 1) % 2 == 1)
+           	 	execStatus = SNPE.at(num_input_layers - 1)->execute(midTensorMap1, outputTensorMap);
+	   	 else
+           	 	execStatus = SNPE.at(num_input_layers - 1)->execute(midTensorMap2, outputTensorMap);
+
+          	 gettimeofday(&tp, NULL);  // Added
+        	 after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+           	 std::cout << "Execute Part Network "<< num_input_layers - 1 << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+
+	    }
+	    else {
+          	gettimeofday(&tp, NULL);  // Added
+   	  	before_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            	execStatus = SNPE.at(num_input_layers - 1)->execute(midTensorMap1, outputTensorMap);
+          	gettimeofday(&tp, NULL);  // Added
+        	after_part = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+           	std::cout << "Execute Part Network "<< num_input_layers - 1 << ": " << after_part - before_part << " ms" <<  std::endl; //Added 
+		 std::cout << "Sleep(1)" << std::endl;
+		 sleep(1);
+	    }
+
+            // Save the execution results if execution successful
+            if (execStatus == true)
+            {
+               saveOutput(outputTensorMap, OutputDir, i * batchSize, batchSize);
+            }
+            else
+            {
+               std::cerr << "Error while executing the network." << std::endl;
+            }
+    	    gettimeofday(&tp, NULL);  // Added
+    	    after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+    	    std::cout << "Execute All Network: " << after_all - before_all << " ms" <<  std::endl; //Added 
+	    std::cout << "Sleep(2)" << std::endl;
+	    sleep(2);
+	
+		// for only 20 iteration 
+	    cnt++;
+	    if( cnt > max_cnt) 
+		break;	
+	  
+        }
+
+	gettimeofday(&tp, NULL);  // Added
+    	after_total = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+    	std::cout << "Execute Total Network: " << after_total - before_total << " ms" <<  std::endl; //Added 
+    }
+  
+
        return SUCCESS;
 }
 
