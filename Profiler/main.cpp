@@ -50,11 +50,128 @@ bool usingInitCaching = false;
 //std::string bufferTypeStr = "ITENSOR";
 std::string bufferTypeStr = "USERBUFFER_FLOAT";
 std::string userBufferSourceStr = "CPUBUFFER";
+int num_input_layers = -1;
 
 const int FAILURE = 1;
 const int SUCCESS = 0;
 
 
+int DNN_execute(std::string OutputDir, const char* inputFile){
+
+    std::ifstream inputList(inputFile);
+    if (!inputList) {
+        std::cout << "Input list or dlc file not valid. Please ensure that you have provided a valid input list and dlc for processing. Run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(0); 
+    }
+    // Check if given buffer type is valid
+    int bufferType;
+    if (bufferTypeStr == "USERBUFFER_FLOAT")
+    {
+        bufferType = USERBUFFER_FLOAT;
+    }
+    else if (bufferTypeStr == "USERBUFFER_TF8")
+    {
+        bufferType = USERBUFFER_TF8;
+    }
+    else if (bufferTypeStr == "ITENSOR")
+    {
+        bufferType = ITENSOR;
+    }
+    else
+    {
+        std::cout << "Buffer type is not valid. Please run snpe-sample with the -h flag for more details" << std::endl;
+        std::exit(FAILURE);
+    }
+
+    //Check if given user buffer source type is valid
+    int userBufferSourceType;
+    // CPUBUFFER / GLBUFFER supported only for USERBUFFER_FLOAT
+    if (bufferType == USERBUFFER_FLOAT)
+    {
+        if( userBufferSourceStr == "CPUBUFFER" )
+        {
+            userBufferSourceType = CPUBUFFER;
+        }
+        else if( userBufferSourceStr == "GLBUFFER" )
+        {
+#ifndef ANDROID
+            std::cout << "GLBUFFER mode is only supported on Android OS" << std::endl;
+            std::exit(FAILURE);
+#endif
+            userBufferSourceType = GLBUFFER;
+        }
+        else
+        {
+            std::cout
+                  << "Source of user buffer type is not valid. Please run snpe-sample with the -h flag for more details"
+                  << std::endl;
+            std::exit(FAILURE);
+        }
+    }
+    bool useUserSuppliedBuffers = (bufferType == USERBUFFER_FLOAT || bufferType == USERBUFFER_TF8);
+
+    zdl::DlSystem::TensorShape tensorShape;
+    tensorShape = SNPE.at(0)->getInputDimensions();
+    size_t batchSize = tensorShape.getDimensions()[0];
+
+#ifdef ANDROID
+    size_t bufSize = 0;
+    if (userBufferSourceType == GLBUFFER) {
+        if(batchSize > 1) {
+            std::cerr << "GL buffer source mode does not support batchsize larger than 1" << std::endl;
+            std::exit(1);
+        }
+        bufSize = calcSizeFromDims(tensorShape.getDimensions(), tensorShape.rank(), sizeof(float));
+    }
+#endif
+    //std::cout << "Batch size for the container is " << batchSize << std::endl;
+
+    // Open the input file listing and group input files into batches
+    std::vector<std::vector<std::string>> inputs = preprocessInput(inputFile, batchSize);
+
+    // Load contents of input file batches ino a SNPE tensor or user buffer,
+    // user buffer include cpu buffer and OpenGL buffer,
+    // execute the network with the input and save each of the returned output to a file.
+    if(useUserSuppliedBuffers)
+    {
+       // SNPE allows its input and output buffers that are fed to the network
+       // to come from user-backed buffers. First, SNPE buffers are created from
+       // user-backed storage. These SNPE buffers are then supplied to the network
+       // and the results are stored in user-backed output buffers. This allows for
+       // reusing the same buffers for multiple inputs and outputs.
+       zdl::DlSystem::UserBufferMap inputMap, outputMap;
+       std::vector <std::unique_ptr<zdl::DlSystem::IUserBuffer>> snpeUserBackedInputBuffers, snpeUserBackedOutputBuffers;
+       std::unordered_map <std::string, std::vector<uint8_t>> applicationOutputBuffers;
+
+       if( bufferType == USERBUFFER_FLOAT && num_input_layers == 1)
+       {
+          createOutputBufferMap(outputMap, applicationOutputBuffers, snpeUserBackedOutputBuffers, SNPE.at(0), false);
+
+          if( userBufferSourceType == CPUBUFFER )
+          {
+             std::unordered_map <std::string, std::vector<uint8_t>> applicationInputBuffers;
+             createInputBufferMap(inputMap, applicationInputBuffers, snpeUserBackedInputBuffers, SNPE.at(0), false);
+
+             //for( size_t i = 0; i < inputs.size(); i++ )
+             for( size_t i = 0; i < 1000; i++ )
+             {
+                // Load input user buffer(s) with values from file(s)
+                if( batchSize > 1 )
+                loadInputUserBufferFloat(applicationInputBuffers, SNPE.at(0), inputs[0]);
+
+                // Execute the input buffer map on the model with SNPE
+	    	//gettimeofday(&tp, NULL);  // Added
+   	    	//before_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+                execStatus = SNPE.at(0)->execute(inputMap, outputMap);
+            	//gettimeofday(&tp, NULL);  // Added
+            	//after_all = tp.tv_sec * 1000 + tp.tv_usec / 1000; // Added
+            	//std::cout << "Execute Part Network "<< "0" << ": " << after_all - before_all << " ms" <<  std::endl; //Added 
+		
+             }
+          }
+       }
+       return SUCCESS;
+}
 
 std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string mode, int batchSize) {
 
@@ -226,6 +343,8 @@ int main(int argc, char** argv)
     if(argv[5] != NULL){
 	batchSize = atoi(argv[5]);
     }
+	
+    num_input_layers = mode_list.size();
     build_setup(app_OutputDir, app_layerPath, mode_list, batchSize);
     DNN_execute(app_OutputDir, app_inputFile);
 
