@@ -42,6 +42,19 @@
 #include "SNPE/SNPE.hpp"
 #include "DiagLog/IDiagLog.hpp"
 
+enum {UNKNOWN, USERBUFFER_FLOAT, USERBUFFER_TF8, ITENSOR};
+enum {CPUBUFFER, GLBUFFER};
+std::vector<std::unique_ptr<zdl::SNPE::SNPE>> SNPE;
+bool execStatus = false;
+bool usingInitCaching = false;
+//std::string bufferTypeStr = "ITENSOR";
+std::string bufferTypeStr = "USERBUFFER_FLOAT";
+std::string userBufferSourceStr = "CPUBUFFER";
+
+const int FAILURE = 1;
+const int SUCCESS = 0;
+
+
 
 std::unique_ptr<zdl::SNPE::SNPE> DNN_build(std::string dlc, std::string OutputDir, std::string bufferTypeStr, std::string userBufferSourceStr, std::string mode, int batchSize) {
 
