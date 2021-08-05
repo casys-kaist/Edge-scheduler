@@ -1401,15 +1401,11 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 
         				gettimeofday(&tp, NULL);  // Added
 					new_task->batch_enqueue_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
-					//new_task->real_arrival_time = new_task->batch_enqueue_time - init_time; 
 				
 					if(START_flag == 1) { 
 						Write_file << "START_TIME: " << new_task->batch_enqueue_time << endl;
 						START_flag = 0;
 					}
-                                	//cout << "START_time: " <<  task.id << " " << task.arrival_time << " " << task.batch_enqueue_time - init_time << endl;
-                                	//Write_file << "START_time: " <<  task.id << " " << task.arrival_time << " " << task.batch_enqueue_time << endl;
-
 					Batch_queue.push_back(*new_task);
                                 	Request_queue.erase(Request_queue.begin()); // erase first element
                         	}
@@ -1432,18 +1428,9 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 				Batch_queue.clear();
 			}
 		}
-		//cout << iter_cnt << ": " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << endl;
-
         	gettimeofday(&tp, NULL);  // Added
 		cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 		cur_time = cur_time - init_time;
-                //cout << "Cur_time: " << cur_time << endl;
-                //cout << "iter_cnt: " << iter_cnt << endl;
-
-		//Write_file << "[ " << vBIG_runtime << " " << vGPU_runtime << " " << vDSP_runtime << " ]" << endl;
-                //Write_file << "Req_time: " <<  iter_cnt << endl;
-                //Write_file << "Cur_time: " << cur_time << endl;
-	
                 iter_cnt += batch_window; 
 
 		if(iter_cnt - cur_time > 0)
