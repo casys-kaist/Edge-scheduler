@@ -1875,15 +1875,6 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			DSP_queue.erase(DSP_queue.begin() + s_idx);
 		}
     	} 
-/*
-	if(sch_end_time - sch_start_time > 10) {
-		cout << "TIME OUT" << endl;	
-    		Write_file << "TIME_OUT" << endl;
-		sleep(1);
-		break;
-	}
-*/
-   	//cout << "Finished: " << Finished_BIG << " " <<  Finished_GPU << " " <<  Finished_DSP  << " = " << Finished_BIG + Finished_GPU + Finished_DSP  << " / " << Total_task << endl ;
 
  	if(Finished_BIG + Finished_GPU + Finished_DSP >= Total_task) { 
 		sleep(1);
@@ -1913,8 +1904,6 @@ int main(int argc, char** argv)
     int deadline_n = stoi(argv[3]); 
     int batch_window = stoi(argv[4]); 
 
-//    string in_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Inputfiles/poisson_avlg/";
-//   string out_dir_name = "/home/wonik/Downloads/snpe-1.25.1.310/exper_result/ATC20/Output/poisson_avlg/";
     string in_dir_name = "/data/local/tmp/request_file/" + input_name  +"I/";
     string out_dir_name = "/data/local/tmp/request_file/" + input_name + algo_cmd + "_O/";
     string in_filepath;
