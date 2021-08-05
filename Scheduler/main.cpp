@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <numeric>
 
-//#include "main.hpp"
 #include "CheckRuntime.hpp"
 #include "LoadContainer.hpp"
 #include "SetBuilderOptions.hpp"
@@ -483,7 +482,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		// app dependent
 		if(app_list[i] == 'a') { // alexnet
     			deadline = 20 * deadlineN;	
-			if(algo_cmd.compare("slo_div") != 0) {
+			if(algo_cmd.compare("PSLO_MAEL") != 0) {
 				// Model_id, batch, num_layers, devices, version, deadline
 				model_par = new Model_Parameter('a', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('a', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -498,7 +497,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		else if(app_list[i] == 'v') { // vgg
 			vgg_slice_exist = 1;
     			deadline = 100 * deadlineN;	
-			if(algo_cmd.compare("slo_div") != 0) {
+			if(algo_cmd.compare("PSLO_MAEL") != 0) {
 				model_par = new Model_Parameter('v', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('v', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 			}
@@ -542,7 +541,7 @@ void SettingModelParameters(string algo_cmd, string app_list, int deadlineN) {
 		}
 		else if(app_list[i] == 'y') { // yoloV2tiny
     			deadline = 48.1 * deadlineN;	
-			if(algo_cmd.compare("slo_div") != 0) {
+			if(algo_cmd.compare("PSLO_MAEL") != 0) {
 				model_par = new Model_Parameter('y', 1, 1, "D", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('y', 1, 1, "G", "0", deadline); Model_Par_List.push_back(*model_par);
 				model_par = new Model_Parameter('y', 1, 1, "B", "0", deadline); Model_Par_List.push_back(*model_par);
@@ -1415,15 +1414,15 @@ void RequestManager(string algo_cmd, int batch_window, vector<Task> Request_queu
 		}
 
 		if(Batch_queue.size() > 0) {
-			if(algo_cmd.compare("my") == 0) {
+			if(algo_cmd.compare("MAEL") == 0) {
 				MAEL(Batch_queue, &vBIG_runtime, &vGPU_runtime, &vDSP_runtime);
 				Batch_queue.clear();
 			}
-			else if(algo_cmd.compare("slo") == 0) {
+			else if(algo_cmd.compare("SLO_MAEL") == 0) {
 				SLO_MAEL(Batch_queue, &vBIG_runtime, &vGPU_runtime, &vDSP_runtime);
 				Batch_queue.clear();
 			}
-			else if(algo_cmd.compare("slo_div") == 0) {
+			else if(algo_cmd.compare("PSLO_MAEL") == 0) {
 				PSLO_MAEL(Batch_queue, &vBIG_runtime, &vGPU_runtime, &vDSP_runtime);
 				Batch_queue.clear();
 			}
@@ -1725,7 +1724,7 @@ int PSLO_MAEL_Scheduler(vector<Task> DeviceQueue) {
 }
 
 
-void Task_scheduler_my(int Total_task, string algo_cmd) {
+void Task_scheduler(int Total_task, string algo_cmd) {
 
     int weight = 10;
 
@@ -1741,7 +1740,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
 
-			if(algo_cmd.compare("my") == 0) {
+			if(algo_cmd.compare("MAEL") == 0) {
 				for(int i = 0; i < BIG_queue.size(); i++) {
 					if(min_runtime > BIG_queue[i].runtime){ 
 						min_runtime = BIG_queue[i].runtime;	
@@ -1751,7 +1750,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				for(int i = 0; i < BIG_queue.size(); i++)
 					BIG_queue[i].runtime /= weight;	
 			}
-			else if(algo_cmd.compare("slo") == 0) {
+			else if(algo_cmd.compare("SLO_MAEL") == 0) {
       		 		gettimeofday(&tp, NULL);  // Added
 				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 				// init remaining time
@@ -1779,7 +1778,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
 
-			if(algo_cmd.compare("my") == 0) {
+			if(algo_cmd.compare("MAEL") == 0) {
 				for(int i = 0; i < GPU_queue.size(); i++) {
 					if(min_runtime > GPU_queue[i].runtime){ 
 						min_runtime = GPU_queue[i].runtime;	
@@ -1789,7 +1788,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				for(int i = 0; i < GPU_queue.size(); i++) 
 					GPU_queue[i].runtime /= weight;	
 			}
-			else if(algo_cmd.compare("slo") == 0) {
+			else if(algo_cmd.compare("SLO_MAEL") == 0) {
       		 		gettimeofday(&tp, NULL);  // Added
 				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 				// init remaining time
@@ -1804,7 +1803,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				}
 			}
 
-			else if(algo_cmd.compare("slo_div") == 0) {
+			else if(algo_cmd.compare("PSLO_MAEL") == 0) {
 				s_idx = PSLO_MAEL_Scheduler(GPU_queue);
 			} 
 			
@@ -1822,7 +1821,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 			int s_idx = -1; // selected idx
 			int min_runtime = 999999;
 		
-			if(algo_cmd.compare("my") == 0) {
+			if(algo_cmd.compare("MAEL") == 0) {
 				for(int i = 0; i < DSP_queue.size(); i++) {
 					if(min_runtime > DSP_queue[i].runtime){ 
 						min_runtime = DSP_queue[i].runtime;	
@@ -1832,7 +1831,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				for(int i = 0; i < DSP_queue.size(); i++) 
 					DSP_queue[i].runtime /= weight;	
 			}
-			else if(algo_cmd.compare("slo") == 0) {
+			else if(algo_cmd.compare("SLO_MAEL") == 0) {
       		 		gettimeofday(&tp, NULL);  // Added
 				cur_time = tp.tv_sec * 1000 + tp.tv_usec / 1000; 
 				// init remaining time
@@ -1847,7 +1846,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 				}
 			}
 
-			else if(algo_cmd.compare("slo_div") == 0) {
+			else if(algo_cmd.compare("PSLO_MAEL") == 0) {
 				s_idx = PSLO_MAEL_Scheduler(DSP_queue);
 			} 
 		
@@ -1884,7 +1883,7 @@ void Task_scheduler_my(int Total_task, string algo_cmd) {
 int main(int argc, char** argv)
 {
     cout << "Usage: snpe-sample.. <algo_cmd> <input_name> <deadlineN> <batch_window>" << endl;
-    cout << "Example: snpe-sample my poisson 10 10" << endl;
+    cout << "Example: snpe-sample MAEL poisson 10 10" << endl;
 
     string algo_cmd = argv[1];
     string input_name = argv[2];
@@ -1938,7 +1937,7 @@ int main(int argc, char** argv)
    		GenerateRequestQueue(Request_queue, in_filepath);
 		
 		thread RequestManagerThread(RequestManager, algo_cmd, batch_window, Request_queue );
-		thread SchedulerManagerThread(Task_scheduler_my, Request_queue.size(), algo_cmd);
+		thread SchedulerManagerThread(Task_scheduler, Request_queue.size(), algo_cmd);
 
 		RequestManagerThread.join();
 		SchedulerManagerThread.join();
